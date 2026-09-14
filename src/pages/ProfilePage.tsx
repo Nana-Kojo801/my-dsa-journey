@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useMutation, useQuery } from 'convex/react'
 import { useAuthActions } from '@convex-dev/auth/react'
 import { api } from '../../convex/_generated/api'
@@ -92,8 +93,18 @@ export default function ProfilePage() {
   return (
     <div className="animate-fade mx-auto max-w-[1080px]">
       <div className="mb-6.5 border-b border-ink/14 pb-6.5">
-        <div className="mb-4 font-mono text-[10.4px] font-medium tracking-[0.2em] text-faint">
-          HANDLE{profile && <> · JOINED {new Date(profile.joinedAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }).toUpperCase()}</>}
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="font-mono text-[10.4px] font-medium tracking-[0.2em] text-faint">
+            HANDLE{profile && <> · JOINED {new Date(profile.joinedAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }).toUpperCase()}</>}
+          </div>
+          {profile?.isAdmin && (
+            <Link
+              to="/admin"
+              className="cursor-pointer border border-ink/28 px-3.5 py-2 font-mono text-[10.4px] font-medium tracking-[0.16em] text-mute no-underline hover:border-ink hover:text-ink md:hidden"
+            >
+              ADMIN →
+            </Link>
+          )}
         </div>
         {profile === undefined ? (
           <Skel className="h-[38px] w-64 md:h-[60px]" />
