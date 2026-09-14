@@ -11,6 +11,7 @@ import { getActivePushEndpoint, getPushPermissionState, subscribeToPush, unsubsc
 import { Skel } from '../components/Skeleton'
 import { EmptyState } from '../components/EmptyState'
 import { ScoreCell } from '../components/ScoreCell'
+import { levelColor } from '../lib/levelColor'
 
 export default function ProfilePage() {
   const flash = useToast()
@@ -219,7 +220,7 @@ export default function ProfilePage() {
           {[
             { k: 'POSITION', v: todayCtx?.week ? `LV ${todayCtx.week.weekNumber} · S${todayCtx.question?.dayNumber}` : '—' },
             { k: 'RANK', v: rank !== undefined ? `${String(rank).padStart(2, '0')} / ${overall?.length}` : '—' },
-            { k: 'CURRENT STREAK', v: `${profile.currentStreak} DAYS`, c: '#0A7A52' },
+            { k: 'CURRENT STREAK', v: `${profile.currentStreak} DAYS`, c: '#C98A0B' },
             { k: 'FREEZES', v: `${profile.freezesRemaining} LEFT`, c: '#1D4ED8' },
             { k: 'TOTAL XP', v: <ScoreCell value={profile.totalScore} /> },
           ].map((r, i) => (
@@ -234,23 +235,26 @@ export default function ProfilePage() {
       )}
 
       <div className="mb-9 flex flex-wrap items-stretch gap-6 md:gap-9">
-        <div className="flex w-full flex-col bg-ink p-6 text-ground md:w-auto md:min-w-[218px] md:flex-0 md:basis-[262px]">
-          <div className="font-mono text-[10.4px] font-medium tracking-[0.2em] text-[#8E9197]">CURRENT STREAK</div>
+        <div
+          className="flex w-full flex-col p-6 text-ground md:w-auto md:min-w-[218px] md:flex-0 md:basis-[262px]"
+          style={{ background: 'linear-gradient(135deg, #C98A0B, #C8362B)' }}
+        >
+          <div className="font-mono text-[10.4px] font-medium tracking-[0.2em] text-[#FFE4BE]">CURRENT STREAK</div>
           {profile === undefined ? (
             <Skel dark className="my-4.5 h-[58px] w-24 md:h-[84px]" />
           ) : (
             <>
               <div className="my-4.5 flex items-baseline gap-2.5">
                 <div className="font-mono text-[58px] leading-[0.86] md:text-[84px]">{profile.currentStreak}</div>
-                <div className="font-mono text-[11px] font-medium tracking-[0.14em] text-[#F0B4AE]">DAYS</div>
+                <div className="font-mono text-[11px] font-medium tracking-[0.14em] text-[#FFE4BE]">DAYS</div>
               </div>
-              <div className="mt-auto flex flex-wrap gap-6 border-t border-ground/18 pt-5.5">
+              <div className="mt-auto flex flex-wrap gap-6 border-t border-ground/25 pt-5.5">
                 <div>
-                  <div className="mb-2 font-mono text-[9.8px] font-medium tracking-[0.14em] text-[#8E9197]">LONGEST</div>
+                  <div className="mb-2 font-mono text-[9.8px] font-medium tracking-[0.14em] text-[#FFE4BE]">LONGEST</div>
                   <div className="font-mono text-[21px]">{profile.longestStreak}d</div>
                 </div>
                 <div>
-                  <div className="mb-2 font-mono text-[9.8px] font-medium tracking-[0.14em] text-[#8E9197]">FREEZES</div>
+                  <div className="mb-2 font-mono text-[9.8px] font-medium tracking-[0.14em] text-[#FFE4BE]">FREEZES</div>
                   <div className="font-mono text-[21px]">{profile.freezesRemaining} left</div>
                 </div>
               </div>
@@ -332,9 +336,21 @@ export default function ProfilePage() {
           ) : (
             <>
               <div className="flex h-[120px] items-end gap-1.5 border-b border-ink/34">
-                {xpBars.map((b) => (
-                  <div key={b.label} className="flex-1" style={{ height: `${Math.max(3, Math.round((b.value / xpMax) * 100))}%`, background: b.label === `L${maxWeek}` ? '#C8362B' : 'rgba(20,22,26,.16)', borderTop: '1px solid #14161A' }} />
-                ))}
+                {xpBars.map((b, i) => {
+                  const color = levelColor(i + 1)
+                  const isCurrentLevel = b.label === `L${maxWeek}`
+                  return (
+                    <div
+                      key={b.label}
+                      className="flex-1"
+                      style={{
+                        height: `${Math.max(3, Math.round((b.value / xpMax) * 100))}%`,
+                        background: isCurrentLevel ? color : `${color}30`,
+                        borderTop: `2px solid ${color}`,
+                      }}
+                    />
+                  )
+                })}
               </div>
               <div className="flex gap-1.5 pt-2">
                 {xpBars.map((b) => (
@@ -444,7 +460,10 @@ export default function ProfilePage() {
       )}
       {history?.slice(0, 30).map(({ submission, question }) => (
         <div key={submission._id} className="flex flex-wrap items-baseline gap-3.5 border-b border-dotted border-ink/20 py-3.5">
-          <div className="w-14.5 font-mono text-[10.4px] font-medium tracking-[0.1em] text-faint">
+          <div
+            className="w-14.5 font-mono text-[10.4px] font-medium tracking-[0.1em]"
+            style={{ color: question ? levelColor(question.weekNumber) : '#9A9CA1' }}
+          >
             L{question?.weekNumber}·S{question?.dayNumber}
           </div>
           <div className="min-w-0 flex-1 basis-[180px]">

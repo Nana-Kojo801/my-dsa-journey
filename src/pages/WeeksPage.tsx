@@ -5,6 +5,7 @@ import { todayLocalStr } from '../lib/date'
 import { useToast } from '../lib/toastContext'
 import { Skel } from '../components/Skeleton'
 import { stripMarkdown } from '../lib/stripMarkdown'
+import { levelColor } from '../lib/levelColor'
 
 export default function WeeksPage() {
   const weeks = useQuery(api.syllabus.listWeeks)
@@ -85,8 +86,9 @@ export default function WeeksPage() {
             const isCurrent = w.weekNumber === currentWeek?.weekNumber
             const solved = solvedByWeek.get(w.weekNumber) ?? 0
             const status = w.endDate < today ? 'cleared' : isCurrent ? 'current' : 'locked'
-            const accent = status === 'cleared' ? '#14161A' : status === 'current' ? '#C8362B' : 'rgba(20,22,26,.18)'
             const locked = status === 'locked'
+            const color = levelColor(w.weekNumber)
+            const accent = locked ? `${color}40` : color
 
             const sideClass = right ? 'md:col-start-3 md:justify-start md:text-left' : 'md:col-start-1 md:justify-end md:text-right'
 
@@ -101,7 +103,14 @@ export default function WeeksPage() {
                   <div className="absolute top-1/2 left-1/2 right-0 h-[3px] -mt-[1.5px] md:hidden" style={{ background: accent }} />
                   {/* desktop: connects toward whichever side the card sits on */}
                   <div className="absolute top-1/2 hidden h-[3px] -mt-[1.5px] md:block" style={{ left: right ? '50%' : '0', right: right ? '0' : '50%', background: accent }} />
-                  <div className="relative h-[15px] w-[15px] rounded-full border-2" style={{ background: status === 'cleared' ? '#14161A' : status === 'current' ? '#C8362B' : '#FBFBF8', borderColor: accent }} />
+                  <div
+                    className="relative h-[15px] w-[15px] rounded-full border-2"
+                    style={{
+                      background: locked ? '#FBFBF8' : color,
+                      borderColor: accent,
+                      boxShadow: isCurrent ? `0 0 0 4px ${color}26` : 'none',
+                    }}
+                  />
                 </div>
                 <div className={`col-start-2 row-start-1 flex items-center justify-start py-2.5 text-left ${sideClass}`}>
                   {locked ? (
@@ -110,15 +119,15 @@ export default function WeeksPage() {
                       className="relative w-full max-w-[430px] cursor-pointer border border-ink/18 bg-transparent px-4 py-4 border-t-2 md:px-5 md:py-4.5"
                       style={{ borderTopColor: accent }}
                     >
-                      <LevelCard w={w} right={right} status={status} solved={solved} isCurrent={false} />
+                      <LevelCard w={w} right={right} status={status} solved={solved} isCurrent={false} color={color} />
                     </div>
                   ) : (
                     <Link
                       to={`/level/${w.weekNumber}`}
                       className="relative w-full max-w-[430px] cursor-pointer border bg-transparent px-4 py-4 border-t-2 no-underline hover:border-ink md:px-5 md:py-4.5"
-                      style={{ borderColor: isCurrent ? 'rgba(200,54,43,.45)' : 'rgba(20,22,26,.18)', borderTopColor: accent, background: isCurrent ? '#FFFDF6' : '#FFFFFF' }}
+                      style={{ borderColor: isCurrent ? `${color}73` : 'rgba(20,22,26,.18)', borderTopColor: accent, background: isCurrent ? '#FFFDF6' : '#FFFFFF' }}
                     >
-                      <LevelCard w={w} right={right} status={status} solved={solved} isCurrent={isCurrent} />
+                      <LevelCard w={w} right={right} status={status} solved={solved} isCurrent={isCurrent} color={color} />
                     </Link>
                   )}
                 </div>
@@ -135,9 +144,9 @@ export default function WeeksPage() {
       )}
 
       <div className="mt-7 flex flex-wrap justify-center gap-5.5 border-t border-ink/14 pt-5">
-        <Legend color="#14161A" label="STAGE CLEARED" />
-        <Legend color="#C8362B" label="IN PROGRESS" />
+        <Legend color="#14161A" label="CLEARED OR CURRENT" />
         <Legend color="#FFFFFF" border label="NOT OPEN YET" />
+        <div className="font-sans text-[13px] leading-[1.5] text-mute">Each level's own color carries through its stages, board entries, and briefing.</div>
       </div>
     </div>
   )
@@ -149,12 +158,14 @@ function LevelCard({
   status,
   solved,
   isCurrent,
+  color,
 }: {
   w: { weekNumber: number; topic: string; explanation: string }
   right: boolean
   status: 'cleared' | 'current' | 'locked'
   solved: number
   isCurrent: boolean
+  color: string
 }) {
   return (
     <div>
@@ -164,11 +175,13 @@ function LevelCard({
         </div>
       )}
       <div className={`mb-2.5 flex items-center justify-start gap-2.5 ${right ? '' : 'md:justify-end'}`}>
-        <div className="font-mono text-[10.4px] font-medium tracking-[0.16em] text-faint">LEVEL {String(w.weekNumber).padStart(2, '0')}</div>
+        <div className="font-mono text-[10.4px] font-medium tracking-[0.16em]" style={{ color: status === 'locked' ? '#9A9CA1' : color }}>
+          LEVEL {String(w.weekNumber).padStart(2, '0')}
+        </div>
         <div className="w-3.5 border-b border-dotted border-ink/30" />
         <div
           className="font-mono text-[10.4px] font-medium tracking-[0.14em]"
-          style={{ color: status === 'cleared' ? '#0A7A52' : status === 'current' ? '#C8362B' : '#9A9CA1' }}
+          style={{ color: status === 'locked' ? '#9A9CA1' : color }}
         >
           {status === 'cleared' ? 'CLEARED' : status === 'current' ? 'IN PROGRESS' : `OPENS WEEK ${String(w.weekNumber).padStart(2, '0')}`}
         </div>
@@ -181,7 +194,7 @@ function LevelCard({
       </div>
       <div className={`mt-3.5 flex justify-start gap-1 ${right ? '' : 'md:justify-end'}`}>
         {Array.from({ length: 7 }, (_, c) => (
-          <div key={c} className="h-1.5 w-[18px]" style={{ background: c < solved ? (status === 'current' ? '#C8362B' : '#14161A') : '#FFFFFF', border: c < solved ? 'none' : '1px solid rgba(20,22,26,.25)' }} />
+          <div key={c} className="h-1.5 w-[18px]" style={{ background: c < solved ? color : '#FFFFFF', border: c < solved ? 'none' : '1px solid rgba(20,22,26,.25)' }} />
         ))}
       </div>
     </div>

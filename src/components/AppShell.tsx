@@ -8,6 +8,15 @@ import { Skel } from './Skeleton'
 
 type NavItem = { key: string; num: string; label: string; icon: string; to: string }
 
+const NAV_COLOR: Record<string, string> = {
+  today: '#C8362B',
+  weeks: '#6D28D9',
+  board: '#C98A0B',
+  reveal: '#1D4ED8',
+  profile: '#0A7A52',
+  admin: '#0F8B8D',
+}
+
 const NAV: NavItem[] = [
   { key: 'today', num: '1', label: "Today's stage", icon: GLYPH.stage, to: '/today' },
   { key: 'weeks', num: '2', label: 'The tree', icon: GLYPH.tree, to: '/weeks' },
@@ -75,7 +84,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     { t: 'SEASON 01', fg: '#8E9197' },
     ...(todayCtx?.week ? [{ t: `LV ${String(weekNumber).padStart(2, '0')} · ${todayCtx.week.topic.toUpperCase()}`, fg: '#E8E9E6' }] : []),
     ...(todayCtx?.question ? [{ t: `STAGE ${todayCtx.question.dayNumber}/7`, fg: '#8E9197' }] : []),
-    ...(profile ? [{ t: `STREAK ${profile.currentStreak}`, fg: '#F0B4AE' }] : []),
+    ...(profile ? [{ t: `STREAK ${profile.currentStreak}`, fg: '#F0C27A' }] : []),
     ...(myRank !== undefined ? [{ t: `RANK ${String(myRank).padStart(2, '0')}`, fg: '#8E9197' }] : []),
     ...(profile ? [{ t: `XP ${profile.totalScore.toLocaleString()}`, fg: '#8E9197' }] : []),
   ]
@@ -103,19 +112,26 @@ export function AppShell({ children }: { children: ReactNode }) {
             <div className="px-5 pb-2.5 font-mono text-[9.8px] font-medium tracking-[0.2em] text-faint">INDEX</div>
             {resolvedNav.map((n) => {
               const on = n.key === activeKey
+              const color = NAV_COLOR[n.key] ?? '#14161A'
               return (
                 <Link
                   key={n.key}
                   to={n.to}
                   className="flex items-baseline gap-2.5 border-l-2 px-5 py-2.5 no-underline hover:bg-ink/4"
-                  style={{ borderLeftColor: on ? '#C8362B' : 'transparent', background: on ? 'rgba(20,22,26,.05)' : 'transparent' }}
+                  style={{ borderLeftColor: on ? color : 'transparent', background: on ? `${color}0D` : 'transparent' }}
                 >
-                  <div className="w-4 shrink-0 text-center font-mono text-[13px] text-faint">{n.icon}</div>
+                  <div className="w-4 shrink-0 text-center font-mono text-[13px]" style={{ color, opacity: on ? 1 : 0.55 }}>
+                    {n.icon}
+                  </div>
                   <div className={`font-sans text-[15.5px] ${on ? 'font-medium text-ink' : 'font-normal text-mute'}`}>
                     {n.label}
                   </div>
                   <div className="flex-1 border-b border-dotted border-ink/22" style={{ transform: 'translateY(-4px)' }} />
-                  {on && <div className="font-mono text-[10.4px] text-ink">{GLYPH.cleared}</div>}
+                  {on && (
+                    <div className="font-mono text-[10.4px]" style={{ color }}>
+                      {GLYPH.cleared}
+                    </div>
+                  )}
                 </Link>
               )
             })}
@@ -125,10 +141,16 @@ export function AppShell({ children }: { children: ReactNode }) {
             {profile && recentWeek ? (
               <>
                 <div className="mb-3 flex items-baseline gap-2.5">
-                  <div className={`relative font-mono text-[36px] leading-[1.15] text-red ${streakBump ? 'animate-streak-pop' : ''}`}>
+                  <div
+                    className={`relative font-mono text-[36px] leading-[1.15] ${streakBump ? 'animate-streak-pop' : ''}`}
+                    style={{ color: '#C98A0B' }}
+                  >
                     {profile.currentStreak}
                     {streakBump && (
-                      <span className="animate-float-up pointer-events-none absolute -top-1 -right-4.5 font-mono text-[13px] font-bold text-red">
+                      <span
+                        className="animate-float-up pointer-events-none absolute -top-1 -right-4.5 font-mono text-[13px] font-bold"
+                        style={{ color: '#C98A0B' }}
+                      >
                         +1
                       </span>
                     )}
@@ -179,12 +201,13 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="sticky bottom-0 z-40 flex shrink-0 border-t border-ink/18 bg-ground/97 backdrop-blur md:hidden">
           {TABS.map((t) => {
             const on = t.key === activeKey
+            const color = NAV_COLOR[t.key] ?? '#14161A'
             return (
               <button
                 key={t.key}
                 onClick={() => navigate(t.to)}
                 className="flex flex-1 cursor-pointer flex-col items-center gap-1.5 border-t-2 py-3 pb-4"
-                style={{ borderTopColor: on ? '#C8362B' : 'transparent', color: on ? '#14161A' : '#9A9CA1' }}
+                style={{ borderTopColor: on ? color : 'transparent', color: on ? color : '#9A9CA1', opacity: on ? 1 : 0.75 }}
               >
                 <div className="font-mono text-[13.8px]">{t.icon}</div>
                 <div className="font-mono text-[9.2px] font-medium tracking-[0.1em]">{t.label}</div>

@@ -6,6 +6,7 @@ import { GLYPH } from '../lib/glyphs'
 import { Skel, SkelLines, SkelStepper } from '../components/Skeleton'
 import { Prose } from '../lib/markdown'
 import type { Doc } from '../../convex/_generated/dataModel'
+import { levelColor } from '../lib/levelColor'
 
 export default function SyllabusPage({ weekNumber }: { weekNumber: number }) {
   const week = useQuery(api.syllabus.getWeek, { weekNumber })
@@ -28,6 +29,7 @@ export default function SyllabusPage({ weekNumber }: { weekNumber: number }) {
   }
 
   const current = questions?.find((q) => q.date === today) ?? null
+  const color = levelColor(weekNumber)
 
   return (
     <div className="animate-fade mx-auto max-w-[900px]">
@@ -37,7 +39,7 @@ export default function SyllabusPage({ weekNumber }: { weekNumber: number }) {
 
       <div className="mb-6.5 flex flex-wrap items-end gap-6 border-b border-ink/14 pb-6.5">
         <div className="min-w-0 flex-1 basis-[300px]">
-          <div className="mb-4 font-mono text-[10.4px] font-medium tracking-[0.2em] text-faint">
+          <div className="mb-4 font-mono text-[10.4px] font-medium tracking-[0.2em]" style={{ color }}>
             LEVEL {String(weekNumber).padStart(2, '0')}
             {week && <> · WEEK OF {formatPretty(week.startDate)}</>}
           </div>
@@ -58,7 +60,7 @@ export default function SyllabusPage({ weekNumber }: { weekNumber: number }) {
                 key={q?._id ?? i}
                 className="h-[9px] flex-1"
                 style={{
-                  background: q && subByQuestion.has(q._id) ? '#14161A' : '#FFFFFF',
+                  background: q && subByQuestion.has(q._id) ? color : '#FFFFFF',
                   border: q && subByQuestion.has(q._id) ? 'none' : '1px solid rgba(20,22,26,.2)',
                 }}
               />
@@ -80,14 +82,14 @@ export default function SyllabusPage({ weekNumber }: { weekNumber: number }) {
                 const reachable = done || q.date <= today
                 return (
                   <div key={q._id} className="flex items-center">
-                    {i > 0 && <div className="h-px w-3 md:w-5" style={{ background: done ? '#14161A' : 'rgba(20,22,26,.16)' }} />}
+                    {i > 0 && <div className="h-px w-3 md:w-5" style={{ background: done ? color : 'rgba(20,22,26,.16)' }} />}
                     <Link
                       to={reachable ? `/question/${q._id}` : '#'}
                       title={`Stage ${q.dayNumber} · ${q.title}`}
                       className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border font-mono text-[11px] no-underline"
                       style={{
-                        borderColor: done ? '#14161A' : isToday ? '#C8362B' : 'rgba(20,22,26,.28)',
-                        background: done ? '#14161A' : isToday ? '#C8362B' : '#FBFBF8',
+                        borderColor: done ? color : isToday ? '#C8362B' : 'rgba(20,22,26,.28)',
+                        background: done ? color : isToday ? '#C8362B' : '#FBFBF8',
                         color: done || isToday ? '#FBFBF8' : reachable ? '#44474D' : '#9A9CA1',
                         cursor: reachable ? 'pointer' : 'default',
                       }}
@@ -117,7 +119,7 @@ export default function SyllabusPage({ weekNumber }: { weekNumber: number }) {
         <Prose content={week.explanation} className="mb-6 font-sans text-[18.4px] leading-[1.7] text-[#2C2F35]" />
       )}
 
-      <div className="mb-2 bg-ink p-5 text-ground">
+      <div className="mb-2 border-t-2 bg-ink p-5 text-ground" style={{ borderTopColor: color }}>
         <div className="mb-4 font-mono text-[9.8px] font-medium tracking-[0.2em] text-[#8E9197]">THE SHAPE OF EVERY SOLUTION</div>
         {week === undefined ? (
           <SkelLines count={5} lastWidth="w-1/3" dark />
@@ -144,13 +146,13 @@ export default function SyllabusPage({ weekNumber }: { weekNumber: number }) {
                 <Skel className="h-3 w-12" />
               </div>
             ))
-          : questions.map((q) => <StageRow key={q._id} q={q} sub={subByQuestion.get(q._id)} today={today} />)}
+          : questions.map((q) => <StageRow key={q._id} q={q} sub={subByQuestion.get(q._id)} today={today} color={color} />)}
       </div>
     </div>
   )
 }
 
-function StageRow({ q, sub, today }: { q: Doc<'questions'>; sub: Doc<'submissions'> | undefined; today: string }) {
+function StageRow({ q, sub, today, color }: { q: Doc<'questions'>; sub: Doc<'submissions'> | undefined; today: string; color: string }) {
   const done = sub !== undefined
   const isToday = q.date === today
   const reachable = done || q.date <= today
@@ -165,7 +167,7 @@ function StageRow({ q, sub, today }: { q: Doc<'questions'>; sub: Doc<'submission
         {q.title}
       </div>
       <div className="hidden shrink-0 font-mono text-[9.8px] font-medium tracking-[0.12em] text-faint sm:block">{q.difficulty.toUpperCase()}</div>
-      <div className="w-16 shrink-0 text-right font-mono text-[11px] font-medium" style={{ color: done ? '#0A7A52' : isToday ? '#C8362B' : '#9A9CA1' }}>
+      <div className="w-16 shrink-0 text-right font-mono text-[11px] font-medium" style={{ color: done ? color : isToday ? '#C8362B' : '#9A9CA1' }}>
         {done ? `${sub.bestScore} PTS` : isToday ? 'OPEN →' : q.date < today ? 'MISSED' : 'LOCKED'}
       </div>
     </Link>

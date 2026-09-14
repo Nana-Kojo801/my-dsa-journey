@@ -13,6 +13,11 @@ type Filter = (typeof FILTERS)[number]
 const AMBER = '#C98A0B'
 const INK = '#14161A'
 const RED = '#C8362B'
+const MEDALS = [
+  { top: AMBER, chip: '#FFF8E8' },
+  { top: '#8B96A6', chip: '#F1F4F8' },
+  { top: '#B08A5A', chip: '#FBF3EA' },
+]
 
 const EMPTY_COPY: Record<Filter, string> = {
   Daily: "Nobody's cleared today's stage yet.",
@@ -155,7 +160,11 @@ export default function BoardPage() {
                 </div>
                 <div
                   className="w-full"
-                  style={{ height: `${Math.max(4, Math.round((c / hiCount) * 100))}%`, background: i === meBin ? 'rgba(200,54,43,.16)' : 'rgba(20,22,26,.08)', borderTop: `2px solid ${i === meBin ? RED : INK}` }}
+                  style={{
+                    height: `${Math.max(4, Math.round((c / hiCount) * 100))}%`,
+                    background: i === meBin ? 'rgba(200,54,43,.18)' : `rgba(201,138,11,${0.06 + (i / BINS) * 0.22})`,
+                    borderTop: `2px solid ${i === meBin ? RED : AMBER}`,
+                  }}
                 />
               </div>
             ))}
@@ -197,15 +206,15 @@ export default function BoardPage() {
             key={p.handle}
             onClick={() => setDetailUser({ userId: p.userId, handle: p.handle })}
             className={`min-w-[180px] flex-1 basis-[180px] cursor-pointer border border-ink/18 p-5 transition-shadow hover:shadow-[0_4px_18px_rgba(20,22,26,.1)] ${i === 0 ? 'animate-crown-glint' : ''}`}
-            style={{ background: i === 0 ? '#FFFDF6' : '#FFFFFF', borderTop: `2px solid ${[AMBER, INK, '#B08A5A'][i]}` }}
+            style={{ background: i === 0 ? '#FFFDF6' : '#FFFFFF', borderTop: `3px solid ${MEDALS[i].top}` }}
           >
             <div className="mb-4.5 flex items-start justify-between gap-3">
-              <div className="font-mono text-[10.4px] font-medium tracking-[0.16em] text-mute">
+              <div className="font-mono text-[10.4px] font-medium tracking-[0.16em]" style={{ color: MEDALS[i].top }}>
                 {['STRONGEST', 'SECOND', 'THIRD'][i]}
               </div>
               <div
-                className="flex h-7.5 w-7.5 items-center justify-center rounded-full border border-ink font-mono text-[10.4px]"
-                style={{ background: i === 0 ? '#FFF8E8' : '#FFFFFF' }}
+                className="flex h-7.5 w-7.5 items-center justify-center rounded-full border font-mono text-[10.4px]"
+                style={{ background: MEDALS[i].chip, borderColor: MEDALS[i].top }}
               >
                 {p.rank}
               </div>

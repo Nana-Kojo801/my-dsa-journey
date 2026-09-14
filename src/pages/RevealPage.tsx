@@ -8,6 +8,7 @@ import { Skel, SkelLines, SkelRow } from '../components/Skeleton'
 import { EmptyState } from '../components/EmptyState'
 import { ScoreBreakdownModal } from '../components/ScoreBreakdown'
 import { ScoreCell } from '../components/ScoreCell'
+import { levelColor } from '../lib/levelColor'
 
 export default function RevealPage({ weekNumber }: { weekNumber?: number }) {
   const weeks = useQuery(api.syllabus.listWeeks)
@@ -80,11 +81,12 @@ export default function RevealPage({ weekNumber }: { weekNumber?: number }) {
   const { week, weekBoard, topPerformer, mostImproved, hardest, runnersWhoFinished, totalRunners, cohortAvgPercentile } = reveal
   const isClosed = week.endDate < today
   const hasData = weekBoard.length > 0
+  const color = levelColor(week.weekNumber)
 
   return (
     <div className="animate-fade mx-auto max-w-[1080px]">
       <div className="mb-5.5 flex items-center gap-3">
-        <div className="font-mono text-[10.4px] font-medium tracking-[0.2em] text-red">
+        <div className="font-mono text-[10.4px] font-medium tracking-[0.2em]" style={{ color }}>
           LEVEL {String(week.weekNumber).padStart(2, '0')} {isClosed ? 'CLOSED' : 'IN PROGRESS'} · {week.topic.toUpperCase()}
         </div>
         <div className="flex-1 border-b border-ink/16" />
@@ -198,7 +200,8 @@ export default function RevealPage({ weekNumber }: { weekNumber?: number }) {
                   void navigator.clipboard?.writeText(window.location.href)
                   flash('RECAP LINK COPIED')
                 }}
-                className="mt-5.5 w-full cursor-pointer bg-ink px-4.5 py-3.5 text-center font-mono text-[11px] font-medium tracking-[0.18em] text-ground hover:bg-red"
+                className="mt-5.5 w-full cursor-pointer bg-ink px-4.5 py-3.5 text-center font-mono text-[11px] font-medium tracking-[0.18em] text-ground transition-colors hover:bg-[var(--lvl)]"
+                style={{ ['--lvl' as string]: color }}
               >
                 COPY THE WEEK RECAP →
               </button>

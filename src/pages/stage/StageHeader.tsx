@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import type { Doc } from '../../../convex/_generated/dataModel'
 import { Skel } from '../../components/Skeleton'
 import { MonoLabel } from '../../components/ui'
+import { levelColor } from '../../lib/levelColor'
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
@@ -28,47 +29,52 @@ export function StageHeader({
             <Skel className="h-3 w-32" />
           </div>
         ) : (
-          question && (
-            <>
-              <div className="mb-4.5 flex flex-wrap items-center gap-2.5">
-                <Link
-                  to={`/level/${question.weekNumber}`}
-                  className="cursor-pointer border-b border-red/35 pb-0.5 font-mono text-[10.4px] font-medium tracking-[0.16em] text-red no-underline"
-                >
-                  LV {String(question.weekNumber).padStart(2, '0')} · {week?.topic.toUpperCase()}
-                </Link>
-                <div className="font-mono text-[10.4px] font-medium tracking-[0.16em] text-faint">
-                  STAGE {question.dayNumber} / 7
-                </div>
-              </div>
-              <h1 className="mb-5 font-serif text-[34px] leading-[0.98] tracking-[-0.015em] md:text-[56px]">{question.title}</h1>
-              <div className="flex flex-wrap items-center gap-4">
-                <div className="flex items-center gap-1.5">
-                  <div
-                    className="h-1.5 w-1.5"
-                    style={{ background: question.difficulty === 'Easy' ? '#0A7A52' : question.difficulty === 'Medium' ? '#C98A0B' : '#C8362B' }}
-                  />
-                  <div className="font-mono text-[10.4px] font-medium tracking-[0.14em] text-mute">
-                    {question.difficulty.toUpperCase()}
+          question && (() => {
+            const color = levelColor(question.weekNumber)
+            return (
+              <>
+                <div className="mb-4.5 flex flex-wrap items-center gap-2.5">
+                  <Link
+                    to={`/level/${question.weekNumber}`}
+                    className="cursor-pointer border-b pb-0.5 font-mono text-[10.4px] font-medium tracking-[0.16em] no-underline"
+                    style={{ borderColor: `${color}59`, color }}
+                  >
+                    LV {String(question.weekNumber).padStart(2, '0')} · {week?.topic.toUpperCase()}
+                  </Link>
+                  <div className="font-mono text-[10.4px] font-medium tracking-[0.16em] text-faint">
+                    STAGE {question.dayNumber} / 7
                   </div>
                 </div>
-                <a
-                  href={question.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="cursor-pointer border border-ink/30 px-3 py-2 font-mono text-[10.4px] font-medium tracking-[0.14em] text-ink no-underline transition-colors hover:border-red hover:text-red"
-                >
-                  OPEN ON LEETCODE ↗
-                </a>
-                <Link
-                  to={`/level/${question.weekNumber}`}
-                  className="cursor-pointer border border-red/40 px-3 py-2 font-mono text-[10.4px] font-medium tracking-[0.14em] text-red no-underline transition-colors hover:bg-red hover:text-ground"
-                >
-                  READ THE BRIEFING →
-                </Link>
-              </div>
-            </>
-          )
+                <h1 className="mb-5 font-serif text-[34px] leading-[0.98] tracking-[-0.015em] md:text-[56px]">{question.title}</h1>
+                <div className="flex flex-wrap items-center gap-4">
+                  <div className="flex items-center gap-1.5">
+                    <div
+                      className="h-1.5 w-1.5"
+                      style={{ background: question.difficulty === 'Easy' ? '#0A7A52' : question.difficulty === 'Medium' ? '#C98A0B' : '#C8362B' }}
+                    />
+                    <div className="font-mono text-[10.4px] font-medium tracking-[0.14em] text-mute">
+                      {question.difficulty.toUpperCase()}
+                    </div>
+                  </div>
+                  <a
+                    href={question.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="cursor-pointer border border-ink/30 px-3 py-2 font-mono text-[10.4px] font-medium tracking-[0.14em] text-ink no-underline transition-colors hover:border-red hover:text-red"
+                  >
+                    OPEN ON LEETCODE ↗
+                  </a>
+                  <Link
+                    to={`/level/${question.weekNumber}`}
+                    className="cursor-pointer border px-3 py-2 font-mono text-[10.4px] font-medium tracking-[0.14em] no-underline transition-colors hover:bg-[var(--lvl)] hover:text-ground"
+                    style={{ borderColor: `${color}66`, color, ['--lvl' as string]: color }}
+                  >
+                    READ THE BRIEFING →
+                  </Link>
+                </div>
+              </>
+            )
+          })()
         )}
       </div>
       {isToday && (
