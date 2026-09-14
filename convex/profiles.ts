@@ -1,6 +1,6 @@
 import { v, ConvexError } from "convex/values";
-import { mutation, query } from "./_generated/server";
-import { getAuthUserId } from "@convex-dev/auth/server";
+import { action, internalQuery, mutation, query } from "./_generated/server";
+import { getAuthUserId, retrieveAccount, modifyAccountCredentials } from "@convex-dev/auth/server";
 import { internal } from "./_generated/api";
 
 function monthKey(ts: number): string {
@@ -98,5 +98,41 @@ export const renameHandle = mutation({
     await ctx.db.patch(profile._id, { handle, handleLower: handle });
     await ctx.db.patch(userId, { name: handle });
     return handle;
+  },
+});
+
+export const getMyPasswordAccountId = internalQuery({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const account = await ctx.db
+      .query("authAccounts")
+      .withIndex("userIdAndProvider", (q) => q.eq("userId", args.userId).eq("provider", "password"))
+      .unique();
+    return account?.providerAccountId ?? null;
+  },
+});
+
+export const changePassword = action({
+  args: { currentPassword: v.string(), newPassword: v.string() },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) throw new ConvexError("Not authenticated");
+    if (args.newPassword.length < 8) {
+      throw new ConvexError("New passphrase needs at least 8 characters.");
+    }
+
+    const accountId: string | null = await ctx.runQuery(internal.profiles.getMyPasswordAccountId, { userId });
+    if (accountId === null) throw new ConvexError("No password account found.");
+
+    try {
+      await retrieveAccount(ctx, { provider: "password", account: { id: accountId, secret: args.currentPassword } });
+    } catch {
+      throw new ConvexError("Current passphrase is incorrect.");
+    }
+
+    await modifyAccountCredentials(ctx, {
+      provider: "password",
+      account: { id: accountId, secret: args.newPassword },
+    });
   },
 });

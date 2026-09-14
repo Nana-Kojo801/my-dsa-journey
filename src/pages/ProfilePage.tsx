@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useMutation, useQuery } from 'convex/react'
+import { useAction, useMutation, useQuery } from 'convex/react'
 import { useAuthActions } from '@convex-dev/auth/react'
+import { ConvexError } from 'convex/values'
 import { api } from '../../convex/_generated/api'
 import { todayLocalStr, formatPretty } from '../lib/date'
 import { useToast } from '../lib/toastContext'
@@ -26,6 +27,7 @@ export default function ProfilePage() {
   const subscribePush = useMutation(api.pushSubscriptions.subscribe)
   const unsubscribePush = useMutation(api.pushSubscriptions.unsubscribe)
   const submitGeneralFeedback = useMutation(api.feedback.submitGeneralFeedback)
+  const changePassword = useAction(api.profiles.changePassword)
 
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState('')
@@ -33,6 +35,9 @@ export default function ProfilePage() {
   const [pushSubscribed, setPushSubscribed] = useState(false)
   const [feedbackDraft, setFeedbackDraft] = useState('')
   const [feedbackSent, setFeedbackSent] = useState(false)
+  const [changingPassword, setChangingPassword] = useState(false)
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
 
   useEffect(() => {
     void getPushPermissionState().then(setPushState)
@@ -65,6 +70,20 @@ export default function ProfilePage() {
     setFeedbackDraft('')
     setFeedbackSent(true)
     flash('FEEDBACK SENT')
+  }
+
+  const savePassword = async () => {
+    if (!currentPassword) return flash('ENTER YOUR CURRENT PASSPHRASE')
+    if (newPassword.length < 8) return flash('NEW PASSPHRASE NEEDS 8+ CHARACTERS')
+    try {
+      await changePassword({ currentPassword, newPassword })
+      setChangingPassword(false)
+      setCurrentPassword('')
+      setNewPassword('')
+      flash('PASSPHRASE UPDATED')
+    } catch (e) {
+      flash(e instanceof ConvexError && typeof e.data === 'string' ? e.data.toUpperCase() : 'COULD NOT UPDATE PASSPHRASE')
+    }
   }
 
   if (profile === null) return null
@@ -139,6 +158,49 @@ export default function ProfilePage() {
             <div className="mt-3.5 font-sans text-[13.5px] leading-[1.6] text-mute">
               Lowercase, numbers and underscores. Changing it renames you everywhere on the board — your history follows.
             </div>
+          </div>
+        )}
+
+        {profile && (
+          <div className="mt-5.5">
+            {!changingPassword ? (
+              <button
+                onClick={() => setChangingPassword(true)}
+                className="cursor-pointer font-mono text-[10.4px] font-medium tracking-[0.16em] text-mute hover:text-ink"
+              >
+                CHANGE PASSPHRASE
+              </button>
+            ) : (
+              <div className="max-w-[380px]">
+                <div className="mb-2.5 font-mono text-[10.4px] font-medium tracking-[0.18em] text-mute">CURRENT PASSPHRASE</div>
+                <input
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  className="mb-4 w-full border-0 border-b border-ink/30 bg-transparent px-0.5 py-2 font-mono text-[16px] outline-none focus:border-red"
+                />
+                <div className="mb-2.5 font-mono text-[10.4px] font-medium tracking-[0.18em] text-mute">NEW PASSPHRASE</div>
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="mb-4 w-full border-0 border-b border-ink/30 bg-transparent px-0.5 py-2 font-mono text-[16px] outline-none focus:border-red"
+                />
+                <div className="flex items-center gap-4">
+                  <PrimaryButton onClick={() => void savePassword()}>SAVE PASSPHRASE</PrimaryButton>
+                  <button
+                    onClick={() => {
+                      setChangingPassword(false)
+                      setCurrentPassword('')
+                      setNewPassword('')
+                    }}
+                    className="cursor-pointer font-mono text-[11px] font-medium tracking-[0.16em] text-mute"
+                  >
+                    CANCEL
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
