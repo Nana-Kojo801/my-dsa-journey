@@ -14,7 +14,9 @@ export const subscribe = mutation({
       .unique();
 
     if (existing !== null) {
-      await ctx.db.patch(existing._id, { userId, p256dh: args.p256dh, auth: args.auth });
+      if (existing.userId === userId) {
+        await ctx.db.patch(existing._id, { p256dh: args.p256dh, auth: args.auth });
+      }
       return existing._id;
     }
 
@@ -31,11 +33,15 @@ export const subscribe = mutation({
 export const unsubscribe = mutation({
   args: { endpoint: v.string() },
   handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) throw new Error("Not authenticated");
     const existing = await ctx.db
       .query("pushSubscriptions")
       .withIndex("by_endpoint", (q) => q.eq("endpoint", args.endpoint))
       .unique();
-    if (existing !== null) await ctx.db.delete(existing._id);
+    if (existing !== null && existing.userId === userId) {
+      await ctx.db.delete(existing._id);
+    }
   },
 });
 

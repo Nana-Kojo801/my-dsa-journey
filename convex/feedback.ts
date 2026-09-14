@@ -22,6 +22,14 @@ export const submitFeedback = mutation({
     const note = args.userNote.trim();
     if (note.length === 0) throw new Error("Describe what the reader got wrong.");
 
+    const dayAgo = Date.now() - 24 * 60 * 60 * 1000;
+    const recentFeedback = await ctx.db
+      .query("feedbackReports")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .filter((q) => q.gte(q.field("createdAt"), dayAgo))
+      .take(11);
+    if (recentFeedback.length >= 10) throw new Error("Too many feedback reports today.");
+
     const submission = await ctx.db
       .query("submissions")
       .withIndex("by_user_question", (q) => q.eq("userId", userId).eq("questionId", args.questionId))
@@ -97,6 +105,14 @@ export const submitGeneralFeedback = mutation({
     if (userId === null) throw new Error("Not authenticated");
     const message = args.message.trim();
     if (message.length === 0) throw new Error("Write something first.");
+
+    const dayAgo = Date.now() - 24 * 60 * 60 * 1000;
+    const recentSite = await ctx.db
+      .query("siteFeedback")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .filter((q) => q.gte(q.field("createdAt"), dayAgo))
+      .take(6);
+    if (recentSite.length >= 5) throw new Error("Too many messages today.");
 
     return await ctx.db.insert("siteFeedback", {
       userId,

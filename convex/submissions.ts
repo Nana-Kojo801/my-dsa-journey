@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { internalMutation, query } from "./_generated/server";
+import { internalMutation, internalQuery, query } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import type { Id } from "./_generated/dataModel";
 import { computeScore } from "./lib/scoring";
@@ -102,6 +102,23 @@ export const recordSubmission = internalMutation({
       },
       best: existing !== null ? { runtimePercentile: bestRuntimePercentile, memoryPercentile: bestMemoryPercentile } : null,
     };
+  },
+});
+
+export const countUserTodayAttempts = internalQuery({
+  args: { userId: v.id("users"), date: v.string(), sinceMs: v.number() },
+  handler: async (ctx, args) => {
+    const subs = await ctx.db
+      .query("submissions")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .filter((q) => q.eq(q.field("date"), args.date))
+      .take(100);
+    const failures = await ctx.db
+      .query("extractionFailures")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .filter((q) => q.gte(q.field("createdAt"), args.sinceMs))
+      .take(100);
+    return subs.length + failures.length;
   },
 });
 

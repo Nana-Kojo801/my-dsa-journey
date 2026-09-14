@@ -11,6 +11,14 @@ export const postComment = mutation({
     if (body.length === 0) throw new Error("Comment can't be empty.");
     if (body.length > 4000) throw new Error("Comment is too long.");
 
+    const hourAgo = Date.now() - 60 * 60 * 1000;
+    const recent = await ctx.db
+      .query("comments")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .filter((q) => q.gte(q.field("createdAt"), hourAgo))
+      .take(11);
+    if (recent.length >= 10) throw new Error("Slow down — max 10 comments per hour.");
+
     return await ctx.db.insert("comments", {
       questionId: args.questionId,
       userId,

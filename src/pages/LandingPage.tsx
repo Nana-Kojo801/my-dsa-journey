@@ -14,7 +14,7 @@ const STORY = [
 export default function LandingPage() {
   const today = todayLocalStr()
   const ctx = useQuery(api.syllabus.getTodayContext, { today })
-  const board = useQuery(api.leaderboard.getLeaderboard, { filter: 'Weekly', today })
+  const board = useQuery(api.leaderboard.getLeaderboard, { filter: 'Weekly' })
   const bounds = useQuery(api.syllabus.getSeasonBounds)
 
   const weekNumber = ctx?.week?.weekNumber

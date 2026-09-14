@@ -2,7 +2,6 @@ import { useState, type ReactNode } from 'react'
 import { useQuery } from 'convex/react'
 import { api } from '../../convex/_generated/api'
 import type { Id } from '../../convex/_generated/dataModel'
-import { todayLocalStr } from '../lib/date'
 import { Skel, SkelRow } from '../components/Skeleton'
 import { EmptyState, SlotRows } from '../components/EmptyState'
 import { ScoreBreakdownModal } from '../components/ScoreBreakdown'
@@ -24,13 +23,12 @@ const EMPTY_COPY: Record<Filter, string> = {
 
 export default function BoardPage() {
   const [filter, setFilter] = useState<Filter>('Overall')
-  const today = todayLocalStr()
-  const rows = useQuery(api.leaderboard.getLeaderboard, { filter, today })
+  const rows = useQuery(api.leaderboard.getLeaderboard, { filter })
 
   const [detailUser, setDetailUser] = useState<{ userId: Id<'users'>; handle: string } | null>(null)
   const breakdown = useQuery(
     api.leaderboard.getUserBreakdown,
-    detailUser ? { userId: detailUser.userId, filter, today } : 'skip',
+    detailUser ? { userId: detailUser.userId, filter } : 'skip',
   )
 
   const filterTabs = (

@@ -74,7 +74,9 @@ export default defineSchema({
     questionId: v.id("questions"),
     reason: v.string(),
     createdAt: v.number(),
-  }).index("by_user_question", ["userId", "questionId"]),
+  })
+    .index("by_user_question", ["userId", "questionId"])
+    .index("by_user", ["userId"]),
 
   streakDays: defineTable({
     userId: v.id("users"),
@@ -92,7 +94,8 @@ export default defineSchema({
     createdAt: v.number(),
   })
     .index("by_question", ["questionId"])
-    .index("by_parent", ["parentId"]),
+    .index("by_parent", ["parentId"])
+    .index("by_user", ["userId"]),
 
   feedbackReports: defineTable({
     userId: v.id("users"),

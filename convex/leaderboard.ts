@@ -3,6 +3,7 @@ import { query } from "./_generated/server";
 import type { QueryCtx } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import type { Doc, Id } from "./_generated/dataModel";
+import { todayStr } from "./lib/dates";
 
 type Row = { profile: Doc<"profiles">; score: number; solved: number };
 
@@ -81,13 +82,13 @@ async function userSubmissionsBreakdown(ctx: QueryCtx, userId: Id<"users">, from
 export const getLeaderboard = query({
   args: {
     filter: v.union(v.literal("Daily"), v.literal("Weekly"), v.literal("Monthly"), v.literal("Overall")),
-    today: v.string(),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
-    const fromDate = await resolveFromDate(ctx, args.filter, args.today);
+    const today = todayStr(Date.now());
+    const fromDate = await resolveFromDate(ctx, args.filter, today);
 
-    const ranked = await rankByDateRange(ctx, fromDate, args.today);
+    const ranked = await rankByDateRange(ctx, fromDate, today);
     return ranked
       .filter((r) => r.score > 0 || args.filter === "Overall")
       .map((r, i) => ({
@@ -106,11 +107,11 @@ export const getUserBreakdown = query({
   args: {
     userId: v.id("users"),
     filter: v.union(v.literal("Daily"), v.literal("Weekly"), v.literal("Monthly"), v.literal("Overall")),
-    today: v.string(),
   },
   handler: async (ctx, args) => {
-    const fromDate = await resolveFromDate(ctx, args.filter, args.today);
-    return await userSubmissionsBreakdown(ctx, args.userId, fromDate, args.today);
+    const today = todayStr(Date.now());
+    const fromDate = await resolveFromDate(ctx, args.filter, today);
+    return await userSubmissionsBreakdown(ctx, args.userId, fromDate, today);
   },
 });
 

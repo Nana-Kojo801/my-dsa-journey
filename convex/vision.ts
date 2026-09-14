@@ -2,6 +2,10 @@ import { v, ConvexError } from "convex/values";
 import { action } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { todayStr } from "./lib/dates";
+
+const ALLOWED_MIME = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
+const DAILY_EXTRACT_CAP = 20;
 
 const EXTRACTION_SCHEMA = {
   type: "object",
@@ -47,6 +51,22 @@ export const extractSubmission = action({
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (userId === null) throw new ConvexError("Not authenticated");
+
+    if (!ALLOWED_MIME.has(args.mimeType)) {
+      throw new ConvexError("Unsupported image type. Use JPEG, PNG, WebP, or GIF.");
+    }
+
+    const now = Date.now();
+    const today = todayStr(now);
+    const todayStartMs = new Date(today).getTime();
+    const attempts = await ctx.runQuery(internal.submissions.countUserTodayAttempts, {
+      userId,
+      date: today,
+      sinceMs: todayStartMs,
+    });
+    if (attempts >= DAILY_EXTRACT_CAP) {
+      throw new ConvexError("Daily submission limit reached. Come back tomorrow.");
+    }
 
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) throw new ConvexError("The reader isn't configured on this deployment yet.");

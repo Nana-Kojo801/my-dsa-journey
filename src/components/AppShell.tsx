@@ -33,7 +33,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   const profile = useQuery(api.profiles.getMyProfile)
   const todayCtx = useQuery(api.syllabus.getTodayContext, { today })
-  const recentWeek = useQuery(api.streaks.getMyRecentDays, { today, days: 7 })
+  const recentWeek = useQuery(api.streaks.getMyRecentDays, { days: 7 })
   const overall = useQuery(api.leaderboard.getOverallLeaderboard)
 
   const weekNumber = todayCtx?.week?.weekNumber

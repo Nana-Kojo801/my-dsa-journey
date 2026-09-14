@@ -104,14 +104,15 @@ export const getPendingReminders = internalQuery({
 });
 
 export const getMyRecentDays = query({
-  args: { today: v.string(), days: v.number() },
+  args: { days: v.number() },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (userId === null) return [];
+    const today = todayStr(Date.now());
     const bounded = Math.min(Math.max(args.days, 1), 90);
     const out: { date: string; status: "cleared" | "freeze" | "missed" | "future" | "unplayed" }[] = [];
     for (let i = bounded - 1; i >= 0; i--) {
-      const date = addDaysStr(args.today, -i);
+      const date = addDaysStr(today, -i);
       const entry = await ctx.db
         .query("streakDays")
         .withIndex("by_user_date", (q) => q.eq("userId", userId).eq("date", date))

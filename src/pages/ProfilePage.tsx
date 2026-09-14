@@ -19,8 +19,8 @@ export default function ProfilePage() {
 
   const profile = useQuery(api.profiles.getMyProfile)
   const history = useQuery(api.submissions.getMyHistory)
-  const recent14 = useQuery(api.streaks.getMyRecentDays, { today, days: 14 })
-  const recent56 = useQuery(api.streaks.getMyRecentDays, { today, days: 56 })
+  const recent14 = useQuery(api.streaks.getMyRecentDays, { days: 14 })
+  const recent56 = useQuery(api.streaks.getMyRecentDays, { days: 56 })
   const overall = useQuery(api.leaderboard.getOverallLeaderboard)
   const todayCtx = useQuery(api.syllabus.getTodayContext, { today })
   const renameHandle = useMutation(api.profiles.renameHandle)
