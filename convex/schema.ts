@@ -113,6 +113,15 @@ export default defineSchema({
     .index("by_status", ["status"])
     .index("by_user", ["userId"]),
 
+  siteFeedback: defineTable({
+    userId: v.id("users"),
+    message: v.string(),
+    status: v.union(v.literal("open"), v.literal("resolved")),
+    createdAt: v.number(),
+  })
+    .index("by_status", ["status"])
+    .index("by_user", ["userId"]),
+
   pushSubscriptions: defineTable({
     userId: v.id("users"),
     endpoint: v.string(),

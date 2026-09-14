@@ -89,3 +89,58 @@ export const resolveFeedback = mutation({
     await ctx.db.patch(args.reportId, { status: "resolved" });
   },
 });
+
+export const submitGeneralFeedback = mutation({
+  args: { message: v.string() },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) throw new Error("Not authenticated");
+    const message = args.message.trim();
+    if (message.length === 0) throw new Error("Write something first.");
+
+    return await ctx.db.insert("siteFeedback", {
+      userId,
+      message,
+      status: "open",
+      createdAt: Date.now(),
+    });
+  },
+});
+
+export const listGeneralFeedback = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) return null;
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .unique();
+    if (profile === null || !profile.isAdmin) return null;
+
+    const items = await ctx.db.query("siteFeedback").order("desc").take(300);
+    return await Promise.all(
+      items.map(async (f) => {
+        const author = await ctx.db
+          .query("profiles")
+          .withIndex("by_user", (q) => q.eq("userId", f.userId))
+          .unique();
+        return { ...f, authorHandle: author?.handle ?? "deleted_runner" };
+      }),
+    );
+  },
+});
+
+export const resolveGeneralFeedback = mutation({
+  args: { feedbackId: v.id("siteFeedback") },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) throw new Error("Not authenticated");
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .unique();
+    if (profile === null || !profile.isAdmin) throw new Error("Admin only.");
+    await ctx.db.patch(args.feedbackId, { status: "resolved" });
+  },
+});

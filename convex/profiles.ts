@@ -1,6 +1,7 @@
 import { v, ConvexError } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { internal } from "./_generated/api";
 
 function monthKey(ts: number): string {
   return new Date(ts).toISOString().slice(0, 7);
@@ -24,11 +25,11 @@ export const ensureProfile = mutation({
     }
     const handle = user.name ?? `runner${userId.slice(0, 6)}`;
 
-    const anyProfile = await ctx.db.query("profiles").take(1);
-    const isFirstUser = anyProfile.length === 0;
+    const allProfiles = await ctx.db.query("profiles").take(5000);
+    const isFirstUser = allProfiles.length === 0;
 
     const now = Date.now();
-    return await ctx.db.insert("profiles", {
+    const profileId = await ctx.db.insert("profiles", {
       userId,
       handle,
       handleLower: handle.toLowerCase(),
@@ -40,6 +41,20 @@ export const ensureProfile = mutation({
       totalScore: 0,
       joinedAt: now,
     });
+
+    if (!isFirstUser) {
+      const admins = allProfiles.filter((p) => p.isAdmin);
+      for (const admin of admins) {
+        await ctx.scheduler.runAfter(0, internal.pushSend.sendToUser, {
+          userId: admin.userId,
+          title: "New runner joined",
+          body: `${handle} just signed up.`,
+          url: "/admin",
+        });
+      }
+    }
+
+    return profileId;
   },
 });
 

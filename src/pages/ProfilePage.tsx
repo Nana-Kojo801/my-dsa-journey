@@ -24,11 +24,14 @@ export default function ProfilePage() {
   const renameHandle = useMutation(api.profiles.renameHandle)
   const subscribePush = useMutation(api.pushSubscriptions.subscribe)
   const unsubscribePush = useMutation(api.pushSubscriptions.unsubscribe)
+  const submitGeneralFeedback = useMutation(api.feedback.submitGeneralFeedback)
 
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState('')
   const [pushState, setPushState] = useState<NotificationPermission | 'unsupported'>('default')
   const [pushSubscribed, setPushSubscribed] = useState(false)
+  const [feedbackDraft, setFeedbackDraft] = useState('')
+  const [feedbackSent, setFeedbackSent] = useState(false)
 
   useEffect(() => {
     void getPushPermissionState().then(setPushState)
@@ -52,6 +55,15 @@ export default function ProfilePage() {
     if (endpoint) await unsubscribePush({ endpoint })
     setPushSubscribed(false)
     flash('NOTIFICATIONS OFF')
+  }
+
+  const sendGeneralFeedback = async () => {
+    const message = feedbackDraft.trim()
+    if (!message) return flash('WRITE SOMETHING FIRST')
+    await submitGeneralFeedback({ message })
+    setFeedbackDraft('')
+    setFeedbackSent(true)
+    flash('FEEDBACK SENT')
   }
 
   if (profile === null) return null
@@ -80,16 +92,8 @@ export default function ProfilePage() {
   return (
     <div className="animate-fade mx-auto max-w-[1080px]">
       <div className="mb-6.5 border-b border-ink/14 pb-6.5">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <div className="font-mono text-[10.4px] font-medium tracking-[0.2em] text-faint">
-            HANDLE{profile && <> · JOINED {new Date(profile.joinedAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }).toUpperCase()}</>}
-          </div>
-          <button
-            onClick={() => void signOut()}
-            className="cursor-pointer font-mono text-[10.4px] font-medium tracking-[0.16em] text-mute hover:text-red"
-          >
-            LOG OUT →
-          </button>
+        <div className="mb-4 font-mono text-[10.4px] font-medium tracking-[0.2em] text-faint">
+          HANDLE{profile && <> · JOINED {new Date(profile.joinedAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }).toUpperCase()}</>}
         </div>
         {profile === undefined ? (
           <Skel className="h-[38px] w-64 md:h-[60px]" />
@@ -302,6 +306,47 @@ export default function ProfilePage() {
           )}
         </div>
       )}
+
+      <div className="mb-9 border border-ink/16 bg-paper px-5 py-4.5">
+        <div className="font-mono text-[10.4px] font-medium tracking-[0.16em] text-faint">GENERAL FEEDBACK</div>
+        <div className="mt-1.5 mb-4 font-sans text-[14px] text-mute">
+          Bug, idea, or just a thought on how the app feels to use — it goes straight to the creator.
+        </div>
+        {feedbackSent ? (
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="font-sans text-[14.5px] text-mute">
+              Thanks — that's logged. <span className="text-ink">Send another?</span>
+            </div>
+            <button
+              onClick={() => setFeedbackSent(false)}
+              className="cursor-pointer border border-ink/28 px-3.5 py-2 font-mono text-[10px] font-medium tracking-[0.14em] text-mute hover:border-ink hover:text-ink"
+            >
+              WRITE ANOTHER
+            </button>
+          </div>
+        ) : (
+          <>
+            <textarea
+              value={feedbackDraft}
+              onChange={(e) => setFeedbackDraft(e.target.value)}
+              placeholder="What's working, what's not, what you'd change…"
+              className="w-full min-h-[72px] resize-y border border-ink/20 bg-ground p-3 font-sans text-[15px] leading-[1.6] outline-none focus:border-red"
+            />
+            <div className="mt-3 flex justify-end">
+              <PrimaryButton onClick={() => void sendGeneralFeedback()}>SEND FEEDBACK</PrimaryButton>
+            </div>
+          </>
+        )}
+      </div>
+
+      <div className="mb-9 flex justify-end">
+        <button
+          onClick={() => void signOut()}
+          className="cursor-pointer border border-ink/28 px-3.5 py-2.5 font-mono text-[10.4px] font-medium tracking-[0.16em] text-mute hover:border-red hover:text-red"
+        >
+          LOG OUT →
+        </button>
+      </div>
 
       <div className="mb-4 font-mono text-[10.4px] font-medium tracking-[0.2em] text-faint">SUBMISSION LEDGER</div>
       {history === undefined &&

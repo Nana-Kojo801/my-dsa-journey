@@ -6,6 +6,7 @@ export const GLYPH = {
   reveal: '◐',
   you: '●',
   reader: '✎',
+  admin: '⚙',
   cleared: '✓',
   current: '▶',
   arrow: '→',

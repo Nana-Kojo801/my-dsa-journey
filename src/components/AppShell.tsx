@@ -61,14 +61,14 @@ export function AppShell({ children }: { children: ReactNode }) {
     if (p.startsWith('/board')) return 'board'
     if (p.startsWith('/reveal')) return 'reveal'
     if (p.startsWith('/profile')) return 'profile'
-    if (p.startsWith('/feedback')) return 'feedback'
+    if (p.startsWith('/admin')) return 'admin'
     if (p.startsWith('/comments')) return 'today'
     return ''
   })()
 
   const resolvedNav = [...NAV]
   if (profile?.isAdmin) {
-    resolvedNav.push({ key: 'feedback', num: '6', label: 'Reader bugs', icon: GLYPH.reader, to: '/feedback' })
+    resolvedNav.push({ key: 'admin', num: '6', label: 'Admin', icon: GLYPH.admin, to: '/admin' })
   }
 
   const statusBits = [

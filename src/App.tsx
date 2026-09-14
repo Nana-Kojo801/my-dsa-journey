@@ -15,7 +15,7 @@ import BoardPage from './pages/BoardPage'
 import RevealPage from './pages/RevealPage'
 import ProfilePage from './pages/ProfilePage'
 import CommentsPage from './pages/CommentsPage'
-import FeedbackAdminPage from './pages/FeedbackAdminPage'
+import AdminPage from './pages/AdminPage'
 import NotFoundPage from './pages/NotFoundPage'
 
 function SyllabusRoute() {
@@ -138,11 +138,11 @@ export default function App() {
           }
         />
         <Route
-          path="/feedback"
+          path="/admin"
           element={
             <RequireAuth>
               <AppShell>
-                <FeedbackAdminPage />
+                <AdminPage />
               </AppShell>
             </RequireAuth>
           }
