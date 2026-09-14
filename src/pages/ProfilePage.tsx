@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useMutation, useQuery } from 'convex/react'
+import { useAuthActions } from '@convex-dev/auth/react'
 import { api } from '../../convex/_generated/api'
 import { todayLocalStr, formatPretty } from '../lib/date'
 import { useToast } from '../lib/toastContext'
@@ -12,6 +13,7 @@ import { ScoreCell } from '../components/ScoreCell'
 export default function ProfilePage() {
   const flash = useToast()
   const today = todayLocalStr()
+  const { signOut } = useAuthActions()
 
   const profile = useQuery(api.profiles.getMyProfile)
   const history = useQuery(api.submissions.getMyHistory)
@@ -78,8 +80,16 @@ export default function ProfilePage() {
   return (
     <div className="animate-fade mx-auto max-w-[1080px]">
       <div className="mb-6.5 border-b border-ink/14 pb-6.5">
-        <div className="mb-4 font-mono text-[10.4px] font-medium tracking-[0.2em] text-faint">
-          HANDLE{profile && <> · JOINED {new Date(profile.joinedAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }).toUpperCase()}</>}
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="font-mono text-[10.4px] font-medium tracking-[0.2em] text-faint">
+            HANDLE{profile && <> · JOINED {new Date(profile.joinedAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }).toUpperCase()}</>}
+          </div>
+          <button
+            onClick={() => void signOut()}
+            className="cursor-pointer font-mono text-[10.4px] font-medium tracking-[0.16em] text-mute hover:text-red"
+          >
+            LOG OUT →
+          </button>
         </div>
         {profile === undefined ? (
           <Skel className="h-[38px] w-64 md:h-[60px]" />
@@ -135,8 +145,8 @@ export default function ProfilePage() {
             { k: 'CURRENT STREAK', v: `${profile.currentStreak} DAYS`, c: '#0A7A52' },
             { k: 'FREEZES', v: `${profile.freezesRemaining} LEFT`, c: '#1D4ED8' },
             { k: 'TOTAL XP', v: <ScoreCell value={profile.totalScore} /> },
-          ].map((r) => (
-            <div key={r.k} className="border-r border-b border-ink/10 px-4 py-4.5">
+          ].map((r, i) => (
+            <div key={r.k} className={`border-r border-b border-ink/10 px-4 py-4.5 ${i === 4 ? 'col-span-2 sm:col-span-1' : ''}`}>
               <div className="font-mono text-[9.8px] font-medium tracking-[0.16em] text-faint">{r.k}</div>
               <div className="mt-3.5 font-mono text-[19px] md:text-[23px]" style={{ color: r.c ?? '#14161A' }}>
                 {r.v}
@@ -147,7 +157,7 @@ export default function ProfilePage() {
       )}
 
       <div className="mb-9 flex flex-wrap items-stretch gap-6 md:gap-9">
-        <div className="flex min-w-[218px] flex-0 basis-[262px] flex-col bg-ink p-6 text-ground">
+        <div className="flex w-full flex-col bg-ink p-6 text-ground md:w-auto md:min-w-[218px] md:flex-0 md:basis-[262px]">
           <div className="font-mono text-[10.4px] font-medium tracking-[0.2em] text-[#8E9197]">CURRENT STREAK</div>
           {profile === undefined ? (
             <Skel dark className="my-4.5 h-[58px] w-24 md:h-[84px]" />

@@ -71,16 +71,6 @@ button {
 
 .bg-graph {
   background-color: var(--color-ground);
-  background-image:
-    linear-gradient(rgb(20 22 26 / 0.055) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(20 22 26 / 0.055) 1px, transparent 1px),
-    linear-gradient(rgb(20 22 26 / 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(20 22 26 / 0.05) 1px, transparent 1px);
-  background-size:
-    120px 120px,
-    120px 120px,
-    24px 24px,
-    24px 24px;
 }
 
 @keyframes fade {
@@ -198,6 +188,22 @@ button {
 
 .animate-crown-glint {
   animation: crown-glint 2.6s ease-in-out infinite;
+}
+
+/* Mono-label text is set very small throughout the app for the editorial look;
+   bump it up on narrow screens where it's genuinely hard to read. */
+@media (max-width: 767px) {
+  .text-\[9px\],
+  .text-\[9\.2px\],
+  .text-\[9\.3px\],
+  .text-\[9\.5px\] {
+    font-size: 11px;
+  }
+  .text-\[9\.8px\],
+  .text-\[10px\],
+  .text-\[10\.4px\] {
+    font-size: 11.5px;
+  }
 }
 
 @keyframes skeleton-sweep {

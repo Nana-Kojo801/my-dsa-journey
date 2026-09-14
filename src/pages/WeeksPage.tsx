@@ -88,27 +88,35 @@ export default function WeeksPage() {
             const accent = status === 'cleared' ? '#14161A' : status === 'current' ? '#C8362B' : 'rgba(20,22,26,.18)'
             const locked = status === 'locked'
 
+            const sideClass = right ? 'md:col-start-3 md:justify-start md:text-left' : 'md:col-start-1 md:justify-end md:text-right'
+
             return (
-              <div key={w._id} className="grid grid-cols-[minmax(0,1fr)_clamp(40px,5vw,68px)_minmax(0,1fr)]">
-                <div className="relative col-start-2 row-start-1 flex items-center justify-center">
+              <div
+                key={w._id}
+                className="grid grid-cols-[22px_minmax(0,1fr)] md:grid-cols-[minmax(0,1fr)_clamp(40px,5vw,68px)_minmax(0,1fr)]"
+              >
+                <div className="relative col-start-1 row-start-1 flex items-center justify-center md:col-start-2">
                   <div className="absolute inset-y-0 left-1/2 w-[3px] -ml-[1.5px]" style={{ background: w.weekNumber <= (currentWeek?.weekNumber ?? 1) ? '#14161A' : 'rgba(20,22,26,.18)' }} />
-                  <div className="absolute top-1/2 h-[3px] -mt-[1.5px]" style={{ left: right ? '50%' : '0', right: right ? '0' : '50%', background: accent }} />
+                  {/* mobile: spine always connects rightward to the single-column card */}
+                  <div className="absolute top-1/2 left-1/2 right-0 h-[3px] -mt-[1.5px] md:hidden" style={{ background: accent }} />
+                  {/* desktop: connects toward whichever side the card sits on */}
+                  <div className="absolute top-1/2 hidden h-[3px] -mt-[1.5px] md:block" style={{ left: right ? '50%' : '0', right: right ? '0' : '50%', background: accent }} />
                   <div className="relative h-[15px] w-[15px] rounded-full border-2" style={{ background: status === 'cleared' ? '#14161A' : status === 'current' ? '#C8362B' : '#FBFBF8', borderColor: accent }} />
                 </div>
-                <div className="row-start-1 flex items-center py-2.5" style={{ gridColumn: right ? 3 : 1, justifyContent: right ? 'flex-start' : 'flex-end' }}>
+                <div className={`col-start-2 row-start-1 flex items-center justify-start py-2.5 text-left ${sideClass}`}>
                   {locked ? (
                     <div
                       onClick={() => flash(`LEVEL ${w.weekNumber} OPENS LATER IN THE SEASON`)}
-                      className="relative w-full max-w-[430px] cursor-pointer border border-ink/18 bg-transparent px-5 py-4.5 border-t-2"
-                      style={{ textAlign: right ? 'left' : 'right', borderTopColor: accent }}
+                      className="relative w-full max-w-[430px] cursor-pointer border border-ink/18 bg-transparent px-4 py-4 border-t-2 md:px-5 md:py-4.5"
+                      style={{ borderTopColor: accent }}
                     >
                       <LevelCard w={w} right={right} status={status} solved={solved} isCurrent={false} />
                     </div>
                   ) : (
                     <Link
                       to={`/level/${w.weekNumber}`}
-                      className="relative w-full max-w-[430px] cursor-pointer border bg-transparent px-5 py-4.5 border-t-2 no-underline hover:border-ink"
-                      style={{ textAlign: right ? 'left' : 'right', borderColor: isCurrent ? 'rgba(200,54,43,.45)' : 'rgba(20,22,26,.18)', borderTopColor: accent, background: isCurrent ? '#FFFDF6' : '#FFFFFF' }}
+                      className="relative w-full max-w-[430px] cursor-pointer border bg-transparent px-4 py-4 border-t-2 no-underline hover:border-ink md:px-5 md:py-4.5"
+                      style={{ borderColor: isCurrent ? 'rgba(200,54,43,.45)' : 'rgba(20,22,26,.18)', borderTopColor: accent, background: isCurrent ? '#FFFDF6' : '#FFFFFF' }}
                     >
                       <LevelCard w={w} right={right} status={status} solved={solved} isCurrent={isCurrent} />
                     </Link>
@@ -155,7 +163,7 @@ function LevelCard({
           YOU ARE HERE
         </div>
       )}
-      <div className="mb-2.5 flex items-center gap-2.5" style={{ justifyContent: right ? 'flex-start' : 'flex-end' }}>
+      <div className={`mb-2.5 flex items-center justify-start gap-2.5 ${right ? '' : 'md:justify-end'}`}>
         <div className="font-mono text-[10.4px] font-medium tracking-[0.16em] text-faint">LEVEL {String(w.weekNumber).padStart(2, '0')}</div>
         <div className="w-3.5 border-b border-dotted border-ink/30" />
         <div
@@ -171,7 +179,7 @@ function LevelCard({
       <div className="font-sans text-[14.5px] leading-[1.6]" style={{ color: status === 'locked' ? '#8A8D93' : '#44474D' }}>
         {stripMarkdown(w.explanation).slice(0, 110)}…
       </div>
-      <div className="mt-3.5 flex gap-1" style={{ justifyContent: right ? 'flex-start' : 'flex-end' }}>
+      <div className={`mt-3.5 flex justify-start gap-1 ${right ? '' : 'md:justify-end'}`}>
         {Array.from({ length: 7 }, (_, c) => (
           <div key={c} className="h-1.5 w-[18px]" style={{ background: c < solved ? (status === 'current' ? '#C8362B' : '#14161A') : '#FFFFFF', border: c < solved ? 'none' : '1px solid rgba(20,22,26,.25)' }} />
         ))}

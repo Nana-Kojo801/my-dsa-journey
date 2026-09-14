@@ -37,7 +37,7 @@ function AuthForm() {
 
   return (
     <div className="min-h-screen grid grid-cols-1 md:grid-cols-2 bg-graph animate-fade">
-      <div className="flex flex-col justify-center gap-8.5 border-r border-ink/14 p-7 md:p-15">
+      <div className="hidden flex-col justify-center gap-8.5 border-r border-ink/14 p-7 md:flex md:p-15">
         <div className="font-mono text-[11.5px] font-medium tracking-[0.2em] text-mute">DSA JOURNEY&nbsp;&nbsp;/&nbsp;&nbsp;SEASON 01</div>
         <div className="font-serif text-[44px] leading-[0.92] tracking-[-0.015em] md:text-[72px]">
           Eighty-plus problems,
@@ -64,6 +64,9 @@ function AuthForm() {
 
       <div className="flex items-center justify-center p-7 md:p-15">
         <div className="w-full max-w-[376px]">
+          <div className="mb-8.5 font-mono text-[11.5px] font-medium tracking-[0.2em] text-mute md:hidden">
+            DSA JOURNEY&nbsp;&nbsp;/&nbsp;&nbsp;SEASON 01
+          </div>
           <div className="mb-8.5 flex gap-5.5">
             <button
               onClick={() => setMode('login')}

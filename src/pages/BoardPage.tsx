@@ -170,7 +170,7 @@ export default function BoardPage() {
             ))}
           </div>
         </div>
-        <div className="min-w-[200px] flex-0 basis-[250px]">
+        <div className="w-full md:min-w-[200px] md:w-auto md:flex-0 md:basis-[250px]">
           {[
             { k: 'YOUR SCORE', v: me ? <ScoreCell value={me.score} /> : '—', fg: RED },
             { k: 'COHORT MEDIAN', v: rows.length ? Math.round((lo + hi) / 2 / 10) * 10 : 0, fg: INK },

@@ -24,17 +24,9 @@ export default function LandingPage() {
     <div className="animate-fade min-h-screen bg-graph">
       <div className="sticky top-0 z-30 flex items-center justify-between gap-4 border-b border-ink/14 bg-ground/92 px-4 py-3.5 backdrop-blur md:px-10">
         <div className="font-mono text-[11.5px] font-medium tracking-[0.2em]">DSA&nbsp;JOURNEY</div>
-        <div className="flex items-center gap-4.5">
-          <div className="flex items-center gap-1.5">
-            <div className="animate-tick h-1.5 w-1.5 rounded-full bg-red" />
-            <div className="font-mono text-[10.4px] font-medium tracking-[0.14em] text-mute">
-              {ctx?.question ? `DAY ${ctx.question.dayNumber} · LEVEL ${weekNumber} LIVE` : 'SEASON LIVE'}
-            </div>
-          </div>
-          <Link to="/auth" className="cursor-pointer bg-ink px-3.5 py-2.5 font-mono text-[10.9px] font-medium tracking-[0.16em] text-ground no-underline hover:bg-red">
-            ENTER →
-          </Link>
-        </div>
+        <Link to="/auth" className="cursor-pointer bg-ink px-3.5 py-2.5 font-mono text-[10.9px] font-medium tracking-[0.16em] text-ground no-underline hover:bg-red">
+          ENTER →
+        </Link>
       </div>
 
       <div className="flex flex-wrap items-end gap-8 border-b border-ink/14 px-4 py-9 md:gap-13.5 md:px-10 md:py-16">
@@ -52,8 +44,8 @@ export default function LandingPage() {
             <em className="italic text-red">that matters.</em>
           </div>
           <div className="mb-7.5 max-w-[48ch] font-sans text-[17.3px] leading-[1.65] text-mute md:text-[20.7px]">
-            One topic a week, seven problems a day apart. You upload the accepted submission; a vision model reads
-            the runtime and memory percentiles off it and the number goes on the board. Nobody self-reports.
+            One topic a week, seven problems a day apart. Upload the accepted submission and the numbers get pulled
+            straight off it — then you're on the board.
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <Link to="/auth" className="flex cursor-pointer items-center gap-3 bg-ink px-5 py-3.5 font-mono text-[11.5px] font-medium tracking-[0.18em] text-ground no-underline hover:bg-red">

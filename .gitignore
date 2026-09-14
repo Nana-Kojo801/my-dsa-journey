@@ -22,3 +22,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Internal planning docs (not part of the public project)
+claude-code-master-build-prompt.md
+claude-code-syllabus-prompt.md
+dsa-platform-detailed-spec.md
+
+# Design mockups
+ui-design/
