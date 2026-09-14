@@ -16,6 +16,7 @@ import type * as feedback from "../feedback.js";
 import type * as http from "../http.js";
 import type * as leaderboard from "../leaderboard.js";
 import type * as lib_dates from "../lib/dates.js";
+import type * as lib_ranking from "../lib/ranking.js";
 import type * as lib_scoring from "../lib/scoring.js";
 import type * as lib_streak from "../lib/streak.js";
 import type * as profiles from "../profiles.js";
@@ -42,6 +43,7 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   leaderboard: typeof leaderboard;
   "lib/dates": typeof lib_dates;
+  "lib/ranking": typeof lib_ranking;
   "lib/scoring": typeof lib_scoring;
   "lib/streak": typeof lib_streak;
   profiles: typeof profiles;

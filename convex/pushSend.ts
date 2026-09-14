@@ -31,6 +31,8 @@ export const sendToUser = internalAction({
           const statusCode = (err as { statusCode?: number }).statusCode;
           if (statusCode === 404 || statusCode === 410) {
             await ctx.runMutation(internal.pushSubscriptions.pruneEndpoint, { endpoint: sub.endpoint });
+          } else {
+            console.error(`Push send failed (status ${statusCode ?? "unknown"}) for endpoint ${sub.endpoint}:`, err);
           }
         }
       }),

@@ -1,10 +1,12 @@
 import { v } from "convex/values";
 import { internalMutation, internalQuery, query } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { computeScore } from "./lib/scoring";
 import { recomputeStreak } from "./lib/streak";
 import { todayStr } from "./lib/dates";
+import { checkRankChanges } from "./lib/ranking";
 
 export const recordSubmission = internalMutation({
   args: {
@@ -79,6 +81,10 @@ export const recordSubmission = internalMutation({
 
     if (scoreDelta !== 0) {
       await ctx.db.patch(profile._id, { totalScore: profile.totalScore + scoreDelta });
+      const rankNotifications = await checkRankChanges(ctx);
+      if (rankNotifications.length > 0) {
+        await ctx.scheduler.runAfter(0, internal.pushSend.sendBatch, { notifications: rankNotifications });
+      }
     }
 
     const dayEntry = await ctx.db

@@ -5,6 +5,7 @@ import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { recomputeStreak } from "./lib/streak";
 import { todayStr, monthKey, addDaysStr } from "./lib/dates";
+import { checkRankChanges } from "./lib/ranking";
 
 type Notification = { userId: Id<"users">; title: string; body: string; url?: string };
 
@@ -51,26 +52,7 @@ export const processRollover = internalMutation({
       }
     }
 
-    const ranked = (await ctx.db.query("profiles").withIndex("by_totalScore").order("desc").take(1000)).map(
-      (p, i) => ({ ...p, newRank: i + 1 }),
-    );
-
-    const notifications: Notification[] = [];
-    for (const p of ranked) {
-      if (p.lastKnownRank !== undefined && p.newRank > p.lastKnownRank && p.totalScore > 0) {
-        notifications.push({
-          userId: p.userId,
-          title: "Someone passed you on the board",
-          body: `You're now rank ${p.newRank} overall.`,
-          url: "/board",
-        });
-      }
-      if (p.lastKnownRank !== p.newRank) {
-        await ctx.db.patch(p._id, { lastKnownRank: p.newRank });
-      }
-    }
-
-    return notifications;
+    return await checkRankChanges(ctx);
   },
 });
 
