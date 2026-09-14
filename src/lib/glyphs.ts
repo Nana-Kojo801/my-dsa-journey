@@ -1,0 +1,16 @@
+export const GLYPH = {
+  stage: '◈',
+  level: '▤',
+  tree: '⑃',
+  board: '▲',
+  reveal: '◐',
+  you: '●',
+  reader: '✎',
+  cleared: '✓',
+  current: '▶',
+  arrow: '→',
+  external: '↗',
+  reply: '↳',
+  freeze: '❄',
+  back: '←',
+} as const

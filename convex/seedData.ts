@@ -1,0 +1,1039 @@
+export const SYLLABUS = [
+  {
+    "weekNumber": 1,
+    "startDate": "2026-09-14",
+    "endDate": "2026-09-20",
+    "topic": "Arrays & Hashing",
+    "explanation": "Arrays and hash-based structures \u2014 hash maps, hash sets \u2014 are the foundation of almost every other pattern in this course. An array gives `O(1)` index access but `O(n)` search; a hash map trades that for `O(1)` average-case lookup, insert, and delete by hashing keys into buckets.\n\nThe core skill this week is recognizing when a brute-force `O(n^2)` nested loop \u2014 *for every element, scan the rest of the array* \u2014 can be collapsed to `O(n)` by trading space for time: store what you've seen so far in a hash map or set, then do a single pass checking membership or a complementary value.\n\n**Key patterns:**\n\n- **Frequency counting** \u2014 build a map of value \u2192 count to detect duplicates, anagrams, or majority elements.\n- **Complement lookup** \u2014 for problems like Two Sum, store `value \u2192 index` as you iterate, and check if `target - current` has already been seen.\n- **Grouping by a derived key** \u2014 group anagrams by their sorted-character signature, using the signature as a hash map key.\n- **Prefix/suffix aggregates** \u2014 compute products or sums without division, useful whenever a value at index `i` depends on an aggregate of everything except `i`.\n- **Counting + bucket sort** \u2014 for \"top K frequent\" problems, count frequencies first, then use a heap or bucket array to extract the K most frequent items in better than `O(n log n)`.\n- **Value-as-index placement** \u2014 using array values as hash-set placement targets (sign-flipping or cycle-sort swaps) finds a missing or duplicate number in `O(n)` time and `O(1)` extra space \u2014 the trick behind *first missing positive*.\n\nWatch for edge cases: empty arrays, all-duplicate arrays, and negative numbers, which can break naive bucket-index tricks. **The big-picture takeaway:** whenever you catch yourself writing a nested loop to check \"has this been seen before\" or \"what pairs with this,\" reach for a hash map first.",
+    "codeSnippet": "seen = {}\nfor i, x in enumerate(nums):\n    if target - x in seen:\n        return [seen[target - x], i]\n    seen[x] = i",
+    "codeCaption": "FIG 1 \u00b7 THE COMPLEMENT-LOOKUP SHAPE",
+    "pitfall": "Whether the hash map gets checked before or after you insert the current element depends on whether the problem allows pairing an element with itself \u2014 **get that order backwards and you'll double-count or miss the case entirely**.",
+    "questions": [
+      {
+        "dayNumber": 1,
+        "title": "Contains Duplicate",
+        "url": "https://leetcode.com/problems/contains-duplicate/",
+        "difficulty": "Easy",
+        "note": "Warm-up on using a hash set for O(n) membership checks instead of O(n^2) comparisons."
+      },
+      {
+        "dayNumber": 2,
+        "title": "Valid Anagram",
+        "url": "https://leetcode.com/problems/valid-anagram/",
+        "difficulty": "Easy",
+        "note": "Frequency counting with a hash map (or fixed-size array) to compare character distributions."
+      },
+      {
+        "dayNumber": 3,
+        "title": "Two Sum",
+        "url": "https://leetcode.com/problems/two-sum/",
+        "difficulty": "Easy",
+        "note": "The canonical complement-lookup pattern: store value->index, check target-minus-current in one pass."
+      },
+      {
+        "dayNumber": 4,
+        "title": "Group Anagrams",
+        "url": "https://leetcode.com/problems/group-anagrams/",
+        "difficulty": "Medium",
+        "note": "Grouping by a derived hash key (sorted string or char-count signature)."
+      },
+      {
+        "dayNumber": 5,
+        "title": "Top K Frequent Elements",
+        "url": "https://leetcode.com/problems/top-k-frequent-elements/",
+        "difficulty": "Medium",
+        "note": "Combines frequency counting with bucket sort/heap selection to beat naive O(n log n) sorting."
+      },
+      {
+        "dayNumber": 6,
+        "title": "Product of Array Except Self",
+        "url": "https://leetcode.com/problems/product-of-array-except-self/",
+        "difficulty": "Medium",
+        "note": "Prefix/suffix product arrays to compute 'everything except index i' without division."
+      },
+      {
+        "dayNumber": 7,
+        "title": "Longest Consecutive Sequence",
+        "url": "https://leetcode.com/problems/longest-consecutive-sequence/",
+        "difficulty": "Medium",
+        "note": "Hash-set trick: only start counting a run from numbers whose predecessor isn't present, giving O(n)."
+      }
+    ]
+  },
+  {
+    "weekNumber": 2,
+    "startDate": "2026-09-21",
+    "endDate": "2026-09-27",
+    "topic": "Two Pointers",
+    "explanation": "Two Pointers replaces an `O(n^2)` nested loop with a single `O(n)` pass by walking a sequence with two indices that move toward each other or in tandem. The most common shape is opposite ends converging: start one pointer at index `0` and the other at the last index, then move whichever side helps you approach the target \u2014 this only works because the array is **sorted first**.\n\nA second shape is same-direction pointers (slow/fast), used for in-place compaction or partitioning: a slow \"write\" pointer only advances when the fast \"read\" pointer finds something worth keeping.\n\n**Key patterns:**\n\n- **In-place partitioning** \u2014 move target values to one side while preserving relative order, using a slow pointer that marks the next write position.\n- **Target-sum on sorted input** \u2014 move `lo` up if the sum is too small, move `hi` down if too large.\n- **Fix-one, scan-the-rest** \u2014 extend Two Sum into 3Sum by sorting, fixing one element, then running the converging scan on the remainder (skip duplicates to avoid repeated triplets).\n- **Three-way partitioning** \u2014 the Dutch national flag pattern classifies every element into one of three buckets in a single pass using `low`/`mid`/`high` pointers.\n- **Boundary-shrinking for area problems** \u2014 always move the pointer at the smaller boundary inward, since moving the larger one can never improve the result.\n- **Prefix-max combined with two pointers** \u2014 precomputed max-height-so-far arrays let trapping/collecting problems run in `O(n)` time and `O(1)` extra space.\n\nThe most common bug is forgetting to **skip duplicate values** when generating unique triplets \u2014 and off-by-one errors the moment the pointers cross.",
+    "codeSnippet": "lo, hi = 0, len(nums) - 1\nwhile lo < hi:\n    total = nums[lo] + nums[hi]\n    if total == target:\n        return [lo, hi]\n    if total < target:\n        lo += 1\n    else:\n        hi -= 1",
+    "codeCaption": "FIG 1 \u00b7 THE CONVERGING-POINTER SHAPE",
+    "pitfall": "This only works because the array is sorted first. **Moving a pointer inward is only safe when you know exactly which direction shrinks or grows the running value.**",
+    "questions": [
+      {
+        "dayNumber": 1,
+        "title": "Move Zeroes",
+        "url": "https://leetcode.com/problems/move-zeroes/",
+        "difficulty": "Easy",
+        "note": "Slow/fast same-direction pointers for in-place partitioning while preserving order."
+      },
+      {
+        "dayNumber": 2,
+        "title": "Valid Palindrome",
+        "url": "https://leetcode.com/problems/valid-palindrome/",
+        "difficulty": "Easy",
+        "note": "Basic opposite-end pointers with character filtering/case normalization."
+      },
+      {
+        "dayNumber": 3,
+        "title": "Two Sum II - Input Array Is Sorted",
+        "url": "https://leetcode.com/problems/two-sum-ii-input-array-is-sorted/",
+        "difficulty": "Medium",
+        "note": "The canonical converging two-pointer target-sum pattern on a sorted array."
+      },
+      {
+        "dayNumber": 4,
+        "title": "3Sum",
+        "url": "https://leetcode.com/problems/3sum/",
+        "difficulty": "Medium",
+        "note": "Fix one element, two-pointer-scan the rest; requires careful duplicate skipping."
+      },
+      {
+        "dayNumber": 5,
+        "title": "Sort Colors",
+        "url": "https://leetcode.com/problems/sort-colors/",
+        "difficulty": "Medium",
+        "note": "Dutch national flag three-way partitioning with low/mid/high pointers in a single pass."
+      },
+      {
+        "dayNumber": 6,
+        "title": "Container With Most Water",
+        "url": "https://leetcode.com/problems/container-with-most-water/",
+        "difficulty": "Medium",
+        "note": "Greedy pointer movement: always shrink the boundary with the smaller height."
+      },
+      {
+        "dayNumber": 7,
+        "title": "Trapping Rain Water",
+        "url": "https://leetcode.com/problems/trapping-rain-water/",
+        "difficulty": "Hard",
+        "note": "Combines two pointers with running max-left/max-right tracking; the week's capstone problem."
+      }
+    ]
+  },
+  {
+    "weekNumber": 3,
+    "startDate": "2026-09-28",
+    "endDate": "2026-10-04",
+    "topic": "Sliding Window",
+    "explanation": "Sliding Window is two pointers moving in the same direction, maintaining a contiguous window that expands and contracts based on an invariant \u2014 a sum, an allowed character set, a distinct-element count. Advance the right pointer to grow the window; whenever the invariant breaks, advance the left pointer to shrink it. Because each pointer only ever moves forward, total movement is bounded by `2n`, turning an apparent `O(n^2)` brute force into `O(n)`.\n\n**Key patterns:**\n\n- **Fixed-size windows** \u2014 slide and maintain a running aggregate (sum, frequency map) in `O(1)` per step.\n- **Small-fixed-distance windows** \u2014 check whether two equal values occur within a bounded index gap using a hash map of `value \u2192 last-seen index`.\n- **Variable-size \"longest/shortest valid window\"** \u2014 grow greedily, shrink only when invalid.\n- **Frequency-map windows** \u2014 track how many distinct requirements are currently satisfied so you never need to rescan the whole map on shrink.\n- **\"At most K\" decomposition** \u2014 solve \"exactly K\" problems as `atMost(K) - atMost(K-1)`.\n- **Monotonic-deque windows** \u2014 for max/min over every window of size `K`, maintain a deque of indices in decreasing (or increasing) value order for `O(n)` total instead of `O(n*K)`.\n\n**The one rule that matters most:** shrink inside a `while`, never an `if` \u2014 removing one element from the left doesn't always make the window valid again in a single step.",
+    "codeSnippet": "left = 0\nwindow = {}\nbest = 0\nfor right, ch in enumerate(s):\n    window[ch] = window.get(ch, 0) + 1\n    while window_is_invalid(window):\n        window[s[left]] -= 1\n        left += 1\n    best = max(best, right - left + 1)",
+    "codeCaption": "FIG 1 \u00b7 THE EXPAND/SHRINK WINDOW SHAPE",
+    "pitfall": "Shrink the window inside a `while` loop, not an `if`. **Removing one character from the left doesn't always make the window valid again in a single step.**",
+    "questions": [
+      {
+        "dayNumber": 1,
+        "title": "Best Time to Buy and Sell Stock",
+        "url": "https://leetcode.com/problems/best-time-to-buy-and-sell-stock/",
+        "difficulty": "Easy",
+        "note": "A single-pass window tracking the minimum-so-far, a gentle entry into window/running-state thinking."
+      },
+      {
+        "dayNumber": 2,
+        "title": "Contains Duplicate II",
+        "url": "https://leetcode.com/problems/contains-duplicate-ii/",
+        "difficulty": "Easy",
+        "note": "Fixed-distance window using a hash map/set of last-seen indices to bound the gap between duplicates."
+      },
+      {
+        "dayNumber": 3,
+        "title": "Longest Substring Without Repeating Characters",
+        "url": "https://leetcode.com/problems/longest-substring-without-repeating-characters/",
+        "difficulty": "Medium",
+        "note": "Classic variable-size window with a hash set/map tracking characters currently in the window."
+      },
+      {
+        "dayNumber": 4,
+        "title": "Longest Repeating Character Replacement",
+        "url": "https://leetcode.com/problems/longest-repeating-character-replacement/",
+        "difficulty": "Medium",
+        "note": "Window that stays valid based on a derived condition (window size minus most-frequent-char count)."
+      },
+      {
+        "dayNumber": 5,
+        "title": "Permutation in String",
+        "url": "https://leetcode.com/problems/permutation-in-string/",
+        "difficulty": "Medium",
+        "note": "Fixed-size window with frequency-map comparison to detect anagram substrings."
+      },
+      {
+        "dayNumber": 6,
+        "title": "Minimum Window Substring",
+        "url": "https://leetcode.com/problems/minimum-window-substring/",
+        "difficulty": "Hard",
+        "note": "Shrink-while-valid to find the minimal window satisfying every required character count."
+      },
+      {
+        "dayNumber": 7,
+        "title": "Sliding Window Maximum",
+        "url": "https://leetcode.com/problems/sliding-window-maximum/",
+        "difficulty": "Hard",
+        "note": "Monotonic deque of indices to get the max of every fixed-size window in O(n) total."
+      }
+    ]
+  },
+  {
+    "weekNumber": 4,
+    "startDate": "2026-10-05",
+    "endDate": "2026-10-11",
+    "topic": "Stack",
+    "explanation": "A stack is LIFO \u2014 last in, first out \u2014 with `O(1)` push/pop/peek, and it's the natural tool whenever a problem involves matching or undoing the most recent unmatched thing. The single most important stack technique for interviews is the **monotonic stack**: kept strictly increasing or decreasing by popping elements that violate the order before pushing the new one, answering \"next greater/smaller element\" questions in `O(n)` total even though it looks like nested loops.\n\n**Key patterns:**\n\n- **Bracket matching** \u2014 push opening symbols; on a closing symbol, check the top of the stack matches (or fail).\n- **Stack-as-running-history** \u2014 replay a sequence of operations where some entries reference or undo previous ones.\n- **Auxiliary min/max stack** \u2014 a parallel stack of running minimums gives `O(1)` `getMin()` alongside normal push/pop.\n- **Postfix evaluation** \u2014 pop two operands and apply an operator whenever one is encountered.\n- **Monotonic stack for \"next greater element\"** \u2014 and its cousins: daily temperatures, car fleet merging.\n- **Monotonic stack for histogram area** \u2014 the stack holds indices, resolved whenever the current bar breaks the increasing property.\n\n**Remember:** push indices, not values, whenever you'll need to write an answer back to a specific position later. Recursion itself is implicitly stack-based \u2014 which is exactly why explicit stacks later convert recursive DFS into iterative form.",
+    "codeSnippet": "answer = [0] * len(nums)\nstack = []\nfor i, x in enumerate(nums):\n    while stack and nums[stack[-1]] < x:\n        j = stack.pop()\n        answer[j] = i - j\n    stack.append(i)",
+    "codeCaption": "FIG 1 \u00b7 THE MONOTONIC STACK SHAPE",
+    "pitfall": "Push indices onto the stack, not values. **You need the index later to write the answer back** for whichever earlier element just found its match.",
+    "questions": [
+      {
+        "dayNumber": 1,
+        "title": "Valid Parentheses",
+        "url": "https://leetcode.com/problems/valid-parentheses/",
+        "difficulty": "Easy",
+        "note": "The canonical push-on-open, match-and-pop-on-close stack pattern."
+      },
+      {
+        "dayNumber": 2,
+        "title": "Baseball Game",
+        "url": "https://leetcode.com/problems/baseball-game/",
+        "difficulty": "Easy",
+        "note": "Stack-as-running-history simulation where some operations reference previous entries."
+      },
+      {
+        "dayNumber": 3,
+        "title": "Min Stack",
+        "url": "https://leetcode.com/problems/min-stack/",
+        "difficulty": "Medium",
+        "note": "Auxiliary stack technique to support O(1) getMin alongside normal push/pop."
+      },
+      {
+        "dayNumber": 4,
+        "title": "Evaluate Reverse Polish Notation",
+        "url": "https://leetcode.com/problems/evaluate-reverse-polish-notation/",
+        "difficulty": "Medium",
+        "note": "Postfix expression evaluation using a stack of operands."
+      },
+      {
+        "dayNumber": 5,
+        "title": "Car Fleet",
+        "url": "https://leetcode.com/problems/car-fleet/",
+        "difficulty": "Medium",
+        "note": "Sort by position, use a monotonic stack of arrival times to count merging fleets."
+      },
+      {
+        "dayNumber": 6,
+        "title": "Daily Temperatures",
+        "url": "https://leetcode.com/problems/daily-temperatures/",
+        "difficulty": "Medium",
+        "note": "Monotonic (decreasing) stack of indices to find the next warmer day in O(n)."
+      },
+      {
+        "dayNumber": 7,
+        "title": "Largest Rectangle in Histogram",
+        "url": "https://leetcode.com/problems/largest-rectangle-in-histogram/",
+        "difficulty": "Hard",
+        "note": "The classic hard monotonic-stack problem: find max rectangle area using increasing stack of bar indices."
+      }
+    ]
+  },
+  {
+    "weekNumber": 5,
+    "startDate": "2026-10-12",
+    "endDate": "2026-10-18",
+    "topic": "Binary Search",
+    "explanation": "Binary search halves a search space to find a target or boundary in `O(log n)` instead of `O(n)` \u2014 and it applies to far more than \"find x in a sorted array.\" The only real requirement is monotonicity: some boolean predicate over the search space must be false-then-true (or true-then-false), so testing the midpoint always tells you which half to discard.\n\n**Key patterns:**\n\n- **Classic search** \u2014 narrow `[low, high]` by comparing the midpoint on a sorted array.\n- **Search through an API, not an array** \u2014 the same halving logic applied via a black-box comparison function.\n- **2-D search** \u2014 treat a row-sorted, globally-ordered grid as one flattened sorted array by converting a mid-index back into `(row, col)`.\n- **Rotated array search** \u2014 at each midpoint, determine which half is still properly sorted, then check if the target falls in that half's range.\n- **Finding the rotation point** \u2014 compare the midpoint to an endpoint to decide which half contains the inflection point.\n- **Binary search on the answer** \u2014 search a numeric range of possible answers using a `feasible(mid)` check as the monotonic predicate, rather than searching an array at all.\n- **Simultaneous partitioning** \u2014 find a median across two sorted arrays in `O(log(min(m, n)))` by binary-searching a partition point in both at once.\n\n**Decide up front** whether you're narrowing toward the first `true` or the last `false` \u2014 mixing the two conventions mid-problem is the single biggest source of off-by-one bugs in this topic.",
+    "codeSnippet": "lo, hi = 0, n - 1\nwhile lo <= hi:\n    mid = (lo + hi) // 2\n    if feasible(mid):\n        hi = mid - 1\n    else:\n        lo = mid + 1\nreturn lo",
+    "codeCaption": "FIG 1 \u00b7 THE BINARY-SEARCH-ON-ANSWER SHAPE",
+    "pitfall": "Decide up front whether you're narrowing toward the first value where `feasible(mid)` is true or the last one where it's false. **Mixing the two conventions mid-problem is the single biggest source of off-by-one bugs here.**",
+    "questions": [
+      {
+        "dayNumber": 1,
+        "title": "Binary Search",
+        "url": "https://leetcode.com/problems/binary-search/",
+        "difficulty": "Easy",
+        "note": "The textbook implementation: narrowing [low, high] on a sorted array."
+      },
+      {
+        "dayNumber": 2,
+        "title": "Guess Number Higher or Lower",
+        "url": "https://leetcode.com/problems/guess-number-higher-or-lower/",
+        "difficulty": "Easy",
+        "note": "Same halving logic applied through a comparison API instead of direct array indexing."
+      },
+      {
+        "dayNumber": 3,
+        "title": "Search a 2D Matrix",
+        "url": "https://leetcode.com/problems/search-a-2d-matrix/",
+        "difficulty": "Medium",
+        "note": "Treat a row-sorted, globally-ordered grid as one flattened sorted array for binary search."
+      },
+      {
+        "dayNumber": 4,
+        "title": "Search in Rotated Sorted Array",
+        "url": "https://leetcode.com/problems/search-in-rotated-sorted-array/",
+        "difficulty": "Medium",
+        "note": "Determine which half is sorted at each step, then decide which side to keep."
+      },
+      {
+        "dayNumber": 5,
+        "title": "Find Minimum in Rotated Sorted Array",
+        "url": "https://leetcode.com/problems/find-minimum-in-rotated-sorted-array/",
+        "difficulty": "Medium",
+        "note": "Binary search for the rotation/inflection point rather than a specific value."
+      },
+      {
+        "dayNumber": 6,
+        "title": "Koko Eating Bananas",
+        "url": "https://leetcode.com/problems/koko-eating-bananas/",
+        "difficulty": "Medium",
+        "note": "Binary search on the answer: search over possible eating speeds using a feasibility check."
+      },
+      {
+        "dayNumber": 7,
+        "title": "Median of Two Sorted Arrays",
+        "url": "https://leetcode.com/problems/median-of-two-sorted-arrays/",
+        "difficulty": "Hard",
+        "note": "Simultaneous binary-search partitioning of two arrays to find the combined median in O(log(min(m,n)))."
+      }
+    ]
+  },
+  {
+    "weekNumber": 6,
+    "startDate": "2026-10-19",
+    "endDate": "2026-10-25",
+    "topic": "Linked List",
+    "explanation": "Linked lists trade an array's `O(1)` random access for `O(1)` insertion and deletion at a known node \u2014 at the cost of explicit pointer manipulation. This week is about building comfort with pointer-chasing bugs and a small set of reusable techniques.\n\n**Key patterns:**\n\n- **Iterative reversal** \u2014 track `prev`, `curr`, and `next` while re-pointing each node's `.next` backward.\n- **Dummy head nodes** \u2014 prepend a sentinel node before the real head so you never special-case \"is this the first node.\"\n- **Fast/slow pointers** \u2014 advance one pointer twice as fast to find the middle in one pass, or detect a cycle (if `fast` ever equals `slow`, there's a cycle).\n- **Two-pass gap technique** \u2014 advance a lead pointer `n` steps first to find the n-th-from-the-end node without knowing the list's length.\n- **Interleaving or hash-map cloning** \u2014 reproduce extra \"random\" pointers when deep-copying a list in `O(n)`.\n- **k-way merging** \u2014 repeatedly compare the heads of `k` sorted lists (via a min-heap) and splice the smallest onto the result.\n\n**Before you write a single line:** draw the pointers on paper. Almost every linked-list bug is a pointer-order mistake \u2014 most often, overwriting `curr.next` before you've saved a reference to the rest of the list.",
+    "codeSnippet": "prev = None\ncurr = head\nwhile curr:\n    nxt = curr.next\n    curr.next = prev\n    prev = curr\n    curr = nxt\nreturn prev",
+    "codeCaption": "FIG 1 \u00b7 THE ITERATIVE REVERSAL SHAPE",
+    "pitfall": "Save `curr.next` into a temporary variable before you overwrite it. **Skip that line and you lose the rest of the list** the instant you rewire the pointer.",
+    "questions": [
+      {
+        "dayNumber": 1,
+        "title": "Reverse Linked List",
+        "url": "https://leetcode.com/problems/reverse-linked-list/",
+        "difficulty": "Easy",
+        "note": "The fundamental prev/current/next pointer-reversal pattern."
+      },
+      {
+        "dayNumber": 2,
+        "title": "Merge Two Sorted Lists",
+        "url": "https://leetcode.com/problems/merge-two-sorted-lists/",
+        "difficulty": "Easy",
+        "note": "Dummy-head technique while merging two sorted lists by repeated smallest-head comparison."
+      },
+      {
+        "dayNumber": 3,
+        "title": "Linked List Cycle",
+        "url": "https://leetcode.com/problems/linked-list-cycle/",
+        "difficulty": "Easy",
+        "note": "Fast/slow pointer (Floyd's) cycle detection."
+      },
+      {
+        "dayNumber": 4,
+        "title": "Remove Nth Node From End of List",
+        "url": "https://leetcode.com/problems/remove-nth-node-from-end-of-list/",
+        "difficulty": "Medium",
+        "note": "Two-pass fast/slow gap trick to find the Nth-from-end node in one traversal."
+      },
+      {
+        "dayNumber": 5,
+        "title": "Copy List with Random Pointer",
+        "url": "https://leetcode.com/problems/copy-list-with-random-pointer/",
+        "difficulty": "Medium",
+        "note": "Interleaving or hash-map technique to deep-copy a list with extra random pointers."
+      },
+      {
+        "dayNumber": 6,
+        "title": "Reorder List",
+        "url": "https://leetcode.com/problems/reorder-list/",
+        "difficulty": "Medium",
+        "note": "Combines fast/slow midpoint-finding, in-place reversal, and interleaved merging."
+      },
+      {
+        "dayNumber": 7,
+        "title": "Merge k Sorted Lists",
+        "url": "https://leetcode.com/problems/merge-k-sorted-lists/",
+        "difficulty": "Hard",
+        "note": "Generalizes list-merging using a min-heap to pick the smallest head among k lists."
+      }
+    ]
+  },
+  {
+    "weekNumber": 7,
+    "startDate": "2026-10-26",
+    "endDate": "2026-11-01",
+    "topic": "Trees",
+    "explanation": "Binary trees introduce recursion as the default tool: almost every tree problem reduces to *solve the left subtree, solve the right subtree, combine the results at the current node*. This week builds fluency with that shape, plus the standard traversal orders.\n\n**Key patterns:**\n\n- **Simple recursive transforms** \u2014 swap children to invert a tree, or take `1 + max(left, right)` to compute depth.\n- **Structural comparison** \u2014 recursively compare two trees node-by-node, or compare a tree against itself at every starting node for subtree matching.\n- **Traversal orders** \u2014 preorder (node, left, right), inorder (left, node, right \u2014 visits a BST in sorted order), postorder (left, right, node), and level-order (BFS with a queue).\n- **BST range invariants** \u2014 a valid BST requires every node's value to fall within a `(min, max)` range inherited and narrowed from its ancestors, not just compared against its immediate children.\n- **Narrowing-range lowest common ancestor** \u2014 the same idea lets you find an LCA in a BST in `O(h)` by branching on where the two targets fall relative to the current node.\n- **Dual-purpose recursion** \u2014 problems like max path sum need each call to both return a value used by its parent and update a shared, global best-so-far.\n\n**The one real trap:** what a call returns upward (like height) is not always what you need to record (like diameter). Keep the two responsibilities separate, and be explicit about what each recursive call guarantees before you write the combine step.",
+    "codeSnippet": "def solve(node):\n    if not node:\n        return NEUTRAL\n    L = solve(node.left)\n    R = solve(node.right)\n    return combine(L, R, node.val)",
+    "codeCaption": "FIG 1 \u00b7 THE RECURSIVE SKELETON",
+    "pitfall": "What a call returns upward (like height) is not always what you need to record (like diameter). **Keep an outer running best separate from the value you return**, or the two responsibilities will collide.",
+    "questions": [
+      {
+        "dayNumber": 1,
+        "title": "Invert Binary Tree",
+        "url": "https://leetcode.com/problems/invert-binary-tree/",
+        "difficulty": "Easy",
+        "note": "Simplest possible recursive tree transform: swap children at every node."
+      },
+      {
+        "dayNumber": 2,
+        "title": "Maximum Depth of Binary Tree",
+        "url": "https://leetcode.com/problems/maximum-depth-of-binary-tree/",
+        "difficulty": "Easy",
+        "note": "1 + max(left depth, right depth) recursion; also a good BFS-level-counting exercise."
+      },
+      {
+        "dayNumber": 3,
+        "title": "Same Tree",
+        "url": "https://leetcode.com/problems/same-tree/",
+        "difficulty": "Easy",
+        "note": "Recursive structural + value comparison between two trees."
+      },
+      {
+        "dayNumber": 4,
+        "title": "Lowest Common Ancestor of a Binary Search Tree",
+        "url": "https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-search-tree/",
+        "difficulty": "Medium",
+        "note": "Uses the BST ordering invariant to walk down from the root in O(h) instead of searching the whole tree."
+      },
+      {
+        "dayNumber": 5,
+        "title": "Validate Binary Search Tree",
+        "url": "https://leetcode.com/problems/validate-binary-search-tree/",
+        "difficulty": "Medium",
+        "note": "Requires passing a narrowing (min, max) range down the recursion, not just comparing immediate children."
+      },
+      {
+        "dayNumber": 6,
+        "title": "Binary Tree Level Order Traversal",
+        "url": "https://leetcode.com/problems/binary-tree-level-order-traversal/",
+        "difficulty": "Medium",
+        "note": "BFS traversal using a queue, processing nodes level by level."
+      },
+      {
+        "dayNumber": 7,
+        "title": "Binary Tree Maximum Path Sum",
+        "url": "https://leetcode.com/problems/binary-tree-maximum-path-sum/",
+        "difficulty": "Hard",
+        "note": "Recursion that both returns a value to its parent and updates a shared global best, since the optimal path may not pass through the root."
+      }
+    ]
+  },
+  {
+    "weekNumber": 8,
+    "startDate": "2026-11-02",
+    "endDate": "2026-11-08",
+    "topic": "Tries",
+    "explanation": "A trie (prefix tree) is a tree where each edge represents one character, so every root-to-node path spells out a prefix \u2014 words sharing a prefix share the same path. Each node stores a map of children plus a flag marking that a complete word ends there. This makes prefix operations run in `O(L)` time, independent of how many words are stored \u2014 something a hash set cannot do.\n\n**Key patterns:**\n\n- **Basic insert/search/`startsWith`** \u2014 walk character by character, creating child nodes as needed on insert.\n- **Prefix-set construction** \u2014 insert a dictionary into a trie, then walk a query word only as far as `end`-marked nodes exist to find its shortest valid root.\n- **Wildcard search** \u2014 when a query character can match anything, branch into a small DFS at that node trying every child.\n- **Ranked autocomplete** \u2014 walk to the node matching a typed prefix, then DFS the subtree below it to collect and rank matches.\n- **Per-node aggregates** \u2014 augment nodes with a running value (like a sum) to answer prefix-aggregate queries in `O(L)`.\n- **Trie + backtracking on a grid** \u2014 insert every target word first, then DFS the grid while walking the trie in lockstep, pruning the instant a path stops matching any prefix.\n\n**Checking word existence and prefix existence are different traversals** \u2014 the word check also needs `node.end` to be true at the final character, not just a reachable path. The trie's real cost is memory, which is the usual tradeoff discussion in interviews.",
+    "codeSnippet": "class Node:\n    def __init__(self):\n        self.children = {}\n        self.end = False\n\ndef insert(root, word):\n    node = root\n    for ch in word:\n        node = node.children.setdefault(ch, Node())\n    node.end = True",
+    "codeCaption": "FIG 1 \u00b7 THE TRIE INSERT SHAPE",
+    "pitfall": "Checking whether a word exists and whether a prefix exists are different traversals. **The word check also needs `node.end` to be true** at the final character, not just a reachable path.",
+    "questions": [
+      {
+        "dayNumber": 1,
+        "title": "Implement Trie (Prefix Tree)",
+        "url": "https://leetcode.com/problems/implement-trie-prefix-tree/",
+        "difficulty": "Medium",
+        "note": "Build the core trie node structure with insert/search/startsWith."
+      },
+      {
+        "dayNumber": 2,
+        "title": "Longest Word in Dictionary",
+        "url": "https://leetcode.com/problems/longest-word-in-dictionary/",
+        "difficulty": "Medium",
+        "note": "Trie/prefix-set traversal that only follows paths built one valid prefix-word at a time."
+      },
+      {
+        "dayNumber": 3,
+        "title": "Design Add and Search Words Data Structure",
+        "url": "https://leetcode.com/problems/design-add-and-search-words-data-structure/",
+        "difficulty": "Medium",
+        "note": "Extends the trie with wildcard '.' search requiring a small DFS branch at matching nodes."
+      },
+      {
+        "dayNumber": 4,
+        "title": "Replace Words",
+        "url": "https://leetcode.com/problems/replace-words/",
+        "difficulty": "Medium",
+        "note": "Uses a trie of prefixes ('roots') to replace each word with its shortest matching root."
+      },
+      {
+        "dayNumber": 5,
+        "title": "Search Suggestions System",
+        "url": "https://leetcode.com/problems/search-suggestions-system/",
+        "difficulty": "Medium",
+        "note": "Autocomplete-style trie traversal collecting and ranking matches below each typed prefix."
+      },
+      {
+        "dayNumber": 6,
+        "title": "Map Sum Pairs",
+        "url": "https://leetcode.com/problems/map-sum-pairs/",
+        "difficulty": "Medium",
+        "note": "Trie augmented with per-node values to answer prefix-sum queries."
+      },
+      {
+        "dayNumber": 7,
+        "title": "Word Search II",
+        "url": "https://leetcode.com/problems/word-search-ii/",
+        "difficulty": "Hard",
+        "note": "Combines a trie of target words with grid backtracking/DFS, pruning paths that no longer match any prefix."
+      }
+    ]
+  },
+  {
+    "weekNumber": 9,
+    "startDate": "2026-11-09",
+    "endDate": "2026-11-15",
+    "topic": "Heap / Priority Queue",
+    "explanation": "A heap is a complete binary tree keeping either the minimum or maximum element accessible at the root in `O(1)`, with `O(log n)` insert and removal. That makes it the default structure whenever a problem only ever needs the extremes \u2014 the smallest/largest K, a running median, or \"always process the next-smallest item next\" (Dijkstra later reuses this exact idea).\n\n**Key patterns:**\n\n- **Direct ranking** \u2014 push every element with its value, then pop in order for a bounded version of full sorting.\n- **Bounded top-K** \u2014 a min-heap capped at size K for the K largest: the root you evict is always the current smallest of your top-K, giving `O(n log K)`.\n- **K-th order statistic** \u2014 build a heap of the whole array and pop K times, or maintain a running size-K heap over a stream.\n- **Greedy scheduling with a heap** \u2014 repeatedly pop the most-in-demand item(s), apply the rule, push back any remainder.\n- **Two-heap running median** \u2014 a max-heap of the lower half and a min-heap of the upper half, kept balanced in size, gives `O(1)` median reads and `O(log n)` inserts.\n- **Heaps over custom keys** \u2014 points by distance, `(weight, node)` pairs for graph algorithms \u2014 anything with a defined comparison key.\n\n**A heap is not a sorted array.** It gives cheap access to the extremes, but never iterate its underlying storage expecting sorted order.",
+    "codeSnippet": "heap = []\nfor x in stream:\n    heappush(heap, x)\n    if len(heap) > k:\n        heappop(heap)\nreturn heap[0]",
+    "codeCaption": "FIG 1 \u00b7 THE BOUNDED MIN-HEAP SHAPE",
+    "pitfall": "For 'the K largest' problems, keep a min-heap capped at size `K`, not a max-heap of everything. **The root you evict is always the current smallest of your top-K**, which is exactly what you want gone.",
+    "questions": [
+      {
+        "dayNumber": 1,
+        "title": "Kth Largest Element in a Stream",
+        "url": "https://leetcode.com/problems/kth-largest-element-in-a-stream/",
+        "difficulty": "Easy",
+        "note": "Maintain a running size-K min-heap so the root is always the current k-th largest."
+      },
+      {
+        "dayNumber": 2,
+        "title": "Last Stone Weight",
+        "url": "https://leetcode.com/problems/last-stone-weight/",
+        "difficulty": "Easy",
+        "note": "Repeatedly pop the two largest elements from a max-heap and push back their difference."
+      },
+      {
+        "dayNumber": 3,
+        "title": "Relative Ranks",
+        "url": "https://leetcode.com/problems/relative-ranks/",
+        "difficulty": "Easy",
+        "note": "Push (score, original index) pairs onto a max-heap and pop in order to assign ranks/medals."
+      },
+      {
+        "dayNumber": 4,
+        "title": "K Closest Points to Origin",
+        "url": "https://leetcode.com/problems/k-closest-points-to-origin/",
+        "difficulty": "Medium",
+        "note": "Top-K pattern using a max-heap of size K keyed on distance."
+      },
+      {
+        "dayNumber": 5,
+        "title": "Kth Largest Element in an Array",
+        "url": "https://leetcode.com/problems/kth-largest-element-in-an-array/",
+        "difficulty": "Medium",
+        "note": "Classic k-th order statistic via heap (or quickselect as an alternative approach worth discussing)."
+      },
+      {
+        "dayNumber": 6,
+        "title": "Task Scheduler",
+        "url": "https://leetcode.com/problems/task-scheduler/",
+        "difficulty": "Medium",
+        "note": "Greedy scheduling with a max-heap of task counts to minimize idle CPU cycles under a cooldown constraint."
+      },
+      {
+        "dayNumber": 7,
+        "title": "Find Median from Data Stream",
+        "url": "https://leetcode.com/problems/find-median-from-data-stream/",
+        "difficulty": "Hard",
+        "note": "The two-heap (max-heap of lower half, min-heap of upper half) running-median pattern."
+      }
+    ]
+  },
+  {
+    "weekNumber": 10,
+    "startDate": "2026-11-16",
+    "endDate": "2026-11-22",
+    "topic": "Backtracking",
+    "explanation": "Backtracking is systematic recursive trial-and-error: build a candidate incrementally, and the moment a partial candidate can't possibly lead to a valid solution, abandon it and try the next option \u2014 rather than blindly exploring the full exponential tree. The template is always choose \u2192 recurse \u2192 un-choose, and that final undo step is what lets every branch reuse the same mutable state instead of copying it.\n\n**Key patterns:**\n\n- **Include/exclude enumeration** \u2014 the base template for subsets and fixed-size combinations.\n- **Duplicate-skipping** \u2014 sort first, then skip repeated values at the same recursion depth to avoid generating the same subset twice.\n- **Reuse via non-advancing recursion** \u2014 allow the same element to be chosen again (combination sum) by not advancing the start index.\n- **Used-set permutations** \u2014 track which elements are already placed, since order matters and nothing repeats.\n- **Cut-point partitioning** \u2014 try every valid next cut (like a palindromic prefix), recurse on the remainder, then backtrack the cut.\n- **Constraint-satisfaction on a grid or board** \u2014 mark a cell used, recurse into neighbors, unmark on the way back, pruning the instant a partial placement already breaks a rule.\n\n**The `path.pop()` after the recursive call isn't cleanup \u2014 it's the mechanism.** Without it, every branch after the first inherits a path still full of a previous branch's choices. The interview signal here is whether you prune early and correctly, not whether you dodge exponential time altogether.",
+    "codeSnippet": "def backtrack(path, remaining):\n    if is_complete(path):\n        record(path)\n        return\n    for choice in remaining:\n        path.append(choice)\n        backtrack(path, next_choices(remaining, choice))\n        path.pop()",
+    "codeCaption": "FIG 1 \u00b7 THE CHOOSE / RECURSE / UNCHOOSE SHAPE",
+    "pitfall": "The `path.pop()` after the recursive call isn't cleanup, **it's the mechanism**. Without it, every branch after the first sees a path list still full of a previous branch's choices.",
+    "questions": [
+      {
+        "dayNumber": 1,
+        "title": "Subsets",
+        "url": "https://leetcode.com/problems/subsets/",
+        "difficulty": "Medium",
+        "note": "The base include/exclude backtracking template with no pruning needed."
+      },
+      {
+        "dayNumber": 2,
+        "title": "Subsets II",
+        "url": "https://leetcode.com/problems/subsets-ii/",
+        "difficulty": "Medium",
+        "note": "Adds duplicate-skipping at each recursion depth after sorting the input."
+      },
+      {
+        "dayNumber": 3,
+        "title": "Combination Sum",
+        "url": "https://leetcode.com/problems/combination-sum/",
+        "difficulty": "Medium",
+        "note": "Backtracking with element reuse (don't advance the start index) plus a sum-based pruning condition."
+      },
+      {
+        "dayNumber": 4,
+        "title": "Permutations",
+        "url": "https://leetcode.com/problems/permutations/",
+        "difficulty": "Medium",
+        "note": "Track used elements across the recursion since order matters and no reuse is allowed."
+      },
+      {
+        "dayNumber": 5,
+        "title": "Palindrome Partitioning",
+        "url": "https://leetcode.com/problems/palindrome-partitioning/",
+        "difficulty": "Medium",
+        "note": "Backtrack over every valid palindromic prefix cut point to enumerate full partitions."
+      },
+      {
+        "dayNumber": 6,
+        "title": "Word Search",
+        "url": "https://leetcode.com/problems/word-search/",
+        "difficulty": "Medium",
+        "note": "Grid backtracking: mark visited, recurse into 4 directions, unmark on the way back up."
+      },
+      {
+        "dayNumber": 7,
+        "title": "N-Queens",
+        "url": "https://leetcode.com/problems/n-queens/",
+        "difficulty": "Hard",
+        "note": "Classic constraint-satisfaction backtracking with column/diagonal pruning at each row placement."
+      }
+    ]
+  },
+  {
+    "weekNumber": 11,
+    "startDate": "2026-11-23",
+    "endDate": "2026-11-29",
+    "topic": "Graphs",
+    "explanation": "Graphs generalize trees to structures with multiple parents, cycles, and no single root \u2014 usually represented as an adjacency list for sparse graphs. The two fundamental traversals, DFS and BFS, are the basis for nearly everything else in graph theory.\n\n**Key patterns:**\n\n- **Grid flood-fill** \u2014 treat each cell as a node with up to four neighbors; DFS or BFS with a visited set relabels a connected region from one source cell.\n- **Component counting** \u2014 flood-fill each unvisited cell as the start of a new component to count islands or their sizes.\n- **Visited-to-clone mapping** \u2014 DFS or BFS a graph while mapping original nodes to their clones, so cycles don't cause infinite recursion.\n- **Boundary-anchored multi-source traversal** \u2014 flood-fill inward from every border cell simultaneously to mark \"safe\" or \"reachable\" regions.\n- **Three-state cycle detection** \u2014 track each node as unvisited / in-progress / done during DFS; hitting an in-progress node again means a cycle, and no topological order exists.\n- **BFS as unweighted shortest path** \u2014 BFS visits nodes in increasing distance order, so the first time you reach a target, that's the shortest path length.\n\n**Mark a node visited the moment you enqueue it, not when you dequeue it** \u2014 otherwise the same node can be queued multiple times before it's ever processed.",
+    "codeSnippet": "visited = {start}\nqueue = deque([start])\nwhile queue:\n    node = queue.popleft()\n    for nxt in neighbors(node):\n        if nxt not in visited:\n            visited.add(nxt)\n            queue.append(nxt)",
+    "codeCaption": "FIG 1 \u00b7 THE BFS SHAPE",
+    "pitfall": "Mark a node visited the moment you enqueue it, not when you dequeue it. **Marking on dequeue lets the same node get queued multiple times** before it's ever processed.",
+    "questions": [
+      {
+        "dayNumber": 1,
+        "title": "Flood Fill",
+        "url": "https://leetcode.com/problems/flood-fill/",
+        "difficulty": "Easy",
+        "note": "The simplest grid-as-graph DFS/BFS: relabel a connected same-colored region from one source cell."
+      },
+      {
+        "dayNumber": 2,
+        "title": "Number of Islands",
+        "url": "https://leetcode.com/problems/number-of-islands/",
+        "difficulty": "Medium",
+        "note": "Grid flood-fill via DFS/BFS to count connected components."
+      },
+      {
+        "dayNumber": 3,
+        "title": "Clone Graph",
+        "url": "https://leetcode.com/problems/clone-graph/",
+        "difficulty": "Medium",
+        "note": "DFS/BFS with a visited-to-clone map to correctly handle cycles while copying."
+      },
+      {
+        "dayNumber": 4,
+        "title": "Surrounded Regions",
+        "url": "https://leetcode.com/problems/surrounded-regions/",
+        "difficulty": "Medium",
+        "note": "Multi-source DFS/BFS from every border cell to mark safe regions before flipping the rest."
+      },
+      {
+        "dayNumber": 5,
+        "title": "Pacific Atlantic Water Flow",
+        "url": "https://leetcode.com/problems/pacific-atlantic-water-flow/",
+        "difficulty": "Medium",
+        "note": "Multi-source BFS/DFS from each ocean's border cells, then intersect reachability sets."
+      },
+      {
+        "dayNumber": 6,
+        "title": "Course Schedule",
+        "url": "https://leetcode.com/problems/course-schedule/",
+        "difficulty": "Medium",
+        "note": "Cycle detection in a directed graph to determine whether a valid course order exists."
+      },
+      {
+        "dayNumber": 7,
+        "title": "Word Ladder",
+        "url": "https://leetcode.com/problems/word-ladder/",
+        "difficulty": "Hard",
+        "note": "BFS shortest path where each word is a node and edges connect words differing by one letter."
+      }
+    ]
+  },
+  {
+    "weekNumber": 12,
+    "startDate": "2026-11-30",
+    "endDate": "2026-12-06",
+    "topic": "Advanced Graphs",
+    "explanation": "This week adds weighted-graph algorithms and Union-Find (Disjoint Set Union) on top of plain BFS/DFS. Union-Find maintains disjoint sets with near-`O(1)` amortized `find` and `union`, using path compression and union by size \u2014 making it the natural tool for connectivity questions and for Kruskal's minimum spanning tree (sort edges by weight, add each one only if it doesn't create a cycle).\n\n**Key patterns:**\n\n- **Global connectivity via Union-Find** \u2014 \"how many separate groups exist\" and \"are these two nodes connected now.\"\n- **Dijkstra's algorithm** \u2014 always expand the currently-closest unvisited node next, using a min-heap keyed on distance; essentially weighted BFS.\n- **Bounded-edge shortest path** \u2014 a Bellman-Ford-style relaxation with an explicit edge-count constraint, for \"cheapest path within K stops.\"\n- **Minimum spanning tree via Prim's** \u2014 grow a single tree by always adding the cheapest edge connecting it to a new node.\n- **Binary search on the bottleneck edge** \u2014 \"minimize the maximum edge weight on a path,\" combined with a connectivity or BFS check.\n- **Eulerian circuit construction (Hierholzer's)** \u2014 DFS that consumes every edge exactly once, building the route in reverse.\n\n**That `if d > dist[node]: continue` line in Dijkstra is not optional** \u2014 without it, stale heap entries from before a shorter path was found get reprocessed and can blow up your runtime on dense graphs.",
+    "codeSnippet": "dist = {start: 0}\nheap = [(0, start)]\nwhile heap:\n    d, node = heappop(heap)\n    if d > dist.get(node, float('inf')):\n        continue\n    for nxt, w in edges(node):\n        nd = d + w\n        if nd < dist.get(nxt, float('inf')):\n            dist[nxt] = nd\n            heappush(heap, (nd, nxt))",
+    "codeCaption": "FIG 1 \u00b7 THE DIJKSTRA SHAPE",
+    "pitfall": "That `if d > dist[node]: continue` line is **not optional**. Without it, stale heap entries from before a shorter path was found get reprocessed and can blow up your runtime on dense graphs.",
+    "questions": [
+      {
+        "dayNumber": 1,
+        "title": "Number of Provinces",
+        "url": "https://leetcode.com/problems/number-of-provinces/",
+        "difficulty": "Medium",
+        "note": "Union-Find (or DFS/BFS) to count the number of connected components given directly as an adjacency matrix."
+      },
+      {
+        "dayNumber": 2,
+        "title": "Course Schedule II",
+        "url": "https://leetcode.com/problems/course-schedule-ii/",
+        "difficulty": "Medium",
+        "note": "Topological sort via DFS post-order or Kahn's BFS algorithm to produce a valid ordering, not just detect a cycle."
+      },
+      {
+        "dayNumber": 3,
+        "title": "Network Delay Time",
+        "url": "https://leetcode.com/problems/network-delay-time/",
+        "difficulty": "Medium",
+        "note": "Textbook Dijkstra's algorithm: min-heap of (distance, node), relaxing neighbor distances."
+      },
+      {
+        "dayNumber": 4,
+        "title": "Cheapest Flights Within K Stops",
+        "url": "https://leetcode.com/problems/cheapest-flights-within-k-stops/",
+        "difficulty": "Medium",
+        "note": "Shortest path with a constraint on the number of edges used, a Bellman-Ford-style relaxation variant."
+      },
+      {
+        "dayNumber": 5,
+        "title": "Min Cost to Connect All Points",
+        "url": "https://leetcode.com/problems/min-cost-to-connect-all-points/",
+        "difficulty": "Medium",
+        "note": "Minimum spanning tree via Prim's algorithm (or Kruskal's with Union-Find) on a fully-connected weighted graph."
+      },
+      {
+        "dayNumber": 6,
+        "title": "Swim in Rising Water",
+        "url": "https://leetcode.com/problems/swim-in-rising-water/",
+        "difficulty": "Hard",
+        "note": "Binary search on the answer combined with BFS/Union-Find connectivity, or a Dijkstra-style min-heap over 'effort so far'."
+      },
+      {
+        "dayNumber": 7,
+        "title": "Reconstruct Itinerary",
+        "url": "https://leetcode.com/problems/reconstruct-itinerary/",
+        "difficulty": "Hard",
+        "note": "Eulerian-path construction (Hierholzer's algorithm): DFS consuming every edge exactly once, building the itinerary in reverse."
+      }
+    ]
+  },
+  {
+    "weekNumber": 13,
+    "startDate": "2026-12-07",
+    "endDate": "2026-12-13",
+    "topic": "1-D Dynamic Programming",
+    "explanation": "Dynamic programming solves problems with overlapping subproblems and optimal substructure by solving each distinct subproblem once instead of recomputing it exponentially. 1-D DP means the state identifying a subproblem is a single index or number. The process is always the same: define what `dp[i]` means in plain English, find the recurrence, identify the base case, then choose top-down memoization or bottom-up iteration.\n\n**Key patterns:**\n\n- **Step-counting recurrences** \u2014 `dp[i] = dp[i-1] + dp[i-2]`, the Fibonacci shape behind climbing stairs.\n- **Adjacency-constrained maximization** \u2014 `dp[i] = max(dp[i-1], dp[i-2] + value[i])`, either skip index `i` or take it and skip the one before.\n- **Circular-array wraparound** \u2014 solve the linear version twice, once excluding the first element and once excluding the last.\n- **Unbounded-choice minimization** \u2014 `dp[amount] = 1 + min` over every choice of `dp[amount - choice]`, the shape behind coin change.\n- **Best-subsequence-ending-here** \u2014 `dp[i]` represents the best subsequence ending exactly at `i`, usually `O(n^2)` unless optimized to `O(n log n)`.\n- **Prefix-segmentation DP** \u2014 `dp[i]` asks whether (or how) the prefix of length `i` can be segmented into valid pieces, checked over every split point `j < i`.\n\n**Write out what `dp[i]` means before you write the recurrence.** Nearly every DP bug is a mismatch between what you meant `dp[i]` to represent and what the code actually computes.",
+    "codeSnippet": "dp = [0] * (n + 1)\ndp[0], dp[1] = base_case_0, base_case_1\nfor i in range(2, n + 1):\n    dp[i] = combine(dp[i - 1], dp[i - 2])\nreturn dp[n]",
+    "codeCaption": "FIG 1 \u00b7 THE 1-D RECURRENCE SHAPE",
+    "pitfall": "Write out what `dp[i]` means in plain English before you write the recurrence. **Almost every DP bug is a mismatch** between what you meant `dp[i]` to represent and what the code actually computes.",
+    "questions": [
+      {
+        "dayNumber": 1,
+        "title": "Climbing Stairs",
+        "url": "https://leetcode.com/problems/climbing-stairs/",
+        "difficulty": "Easy",
+        "note": "The Fibonacci-shaped base case for 1-D DP: dp[i] = dp[i-1] + dp[i-2]."
+      },
+      {
+        "dayNumber": 2,
+        "title": "Min Cost Climbing Stairs",
+        "url": "https://leetcode.com/problems/min-cost-climbing-stairs/",
+        "difficulty": "Easy",
+        "note": "Same recurrence shape as Climbing Stairs but taking a min-cost instead of a count."
+      },
+      {
+        "dayNumber": 3,
+        "title": "House Robber",
+        "url": "https://leetcode.com/problems/house-robber/",
+        "difficulty": "Medium",
+        "note": "Adjacency-constraint DP: dp[i] = max(skip house i, take house i + dp[i-2])."
+      },
+      {
+        "dayNumber": 4,
+        "title": "House Robber II",
+        "url": "https://leetcode.com/problems/house-robber-ii/",
+        "difficulty": "Medium",
+        "note": "Circular-array variant solved by running House Robber's logic twice, excluding first or last house."
+      },
+      {
+        "dayNumber": 5,
+        "title": "Coin Change",
+        "url": "https://leetcode.com/problems/coin-change/",
+        "difficulty": "Medium",
+        "note": "Unbounded-choice DP: minimum number of coins to reach each amount from 0 up to the target."
+      },
+      {
+        "dayNumber": 6,
+        "title": "Longest Increasing Subsequence",
+        "url": "https://leetcode.com/problems/longest-increasing-subsequence/",
+        "difficulty": "Medium",
+        "note": "dp[i] = best subsequence length ending at i; also a good lead-in to the O(n log n) binary-search optimization."
+      },
+      {
+        "dayNumber": 7,
+        "title": "Word Break II",
+        "url": "https://leetcode.com/problems/word-break-ii/",
+        "difficulty": "Hard",
+        "note": "Extends prefix-segmentation DP to reconstruct and return every valid segmentation, not just whether one exists."
+      }
+    ]
+  },
+  {
+    "weekNumber": 14,
+    "startDate": "2026-12-14",
+    "endDate": "2026-12-20",
+    "topic": "2-D Dynamic Programming",
+    "explanation": "2-D DP extends the same subproblem-caching idea to states identified by two indices \u2014 most often \"position in sequence A\" and \"position in sequence B,\" or \"row\" and \"column.\" Everything else \u2014 recurrence, base cases, top-down vs. bottom-up \u2014 works exactly as in 1-D DP, just over a table.\n\n**Key patterns:**\n\n- **Grid path counting** \u2014 `dp[r][c] = dp[r-1][c] + dp[r][c-1]`, the sum of ways to reach the cells that feed into it.\n- **Obstacle-aware grid counting** \u2014 the same recurrence, where a blocked cell simply contributes zero ways.\n- **Two-string comparison** \u2014 `dp[i][j]` considers the first `i` characters of A and first `j` of B, branching on whether `A[i-1] == B[j-1]`.\n- **Interleaving-source DP** \u2014 `dp[i][j]` asks whether the interleaved result so far could have come from A's or B's next character.\n- **State-machine DP** \u2014 a third dimension for a discrete state (holding, cooldown, not holding), transitioning between states based on allowed actions.\n- **Unbounded-knapsack counting** \u2014 iterate the \"coins\" dimension on the outside to count combinations, not permutations.\n- **Three-way edit recurrence** \u2014 edit distance's insert/delete/replace choices, taking the minimum of the three plus one, short-circuiting on a match.\n\n**Fill order matters.** If `dp[i][j]` ever depends on a cell to its right or below, the loop is running backwards, and every earlier cell it reads will still hold its default value.",
+    "codeSnippet": "dp = [[0] * (n + 1) for _ in range(m + 1)]\nfor i in range(1, m + 1):\n    for j in range(1, n + 1):\n        dp[i][j] = combine(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1])\nreturn dp[m][n]",
+    "codeCaption": "FIG 1 \u00b7 THE 2-D RECURRENCE SHAPE",
+    "pitfall": "Fill order matters. **If `dp[i][j]` ever depends on a cell to its right or below, your loop is running backwards**, and every earlier cell it reads will still hold its default value.",
+    "questions": [
+      {
+        "dayNumber": 1,
+        "title": "Unique Paths",
+        "url": "https://leetcode.com/problems/unique-paths/",
+        "difficulty": "Medium",
+        "note": "The simplest grid-path-counting 2-D DP: dp[r][c] = dp[r-1][c] + dp[r][c-1]."
+      },
+      {
+        "dayNumber": 2,
+        "title": "Unique Paths II",
+        "url": "https://leetcode.com/problems/unique-paths-ii/",
+        "difficulty": "Medium",
+        "note": "Adds obstacles to the grid-path recurrence: a blocked cell contributes zero ways."
+      },
+      {
+        "dayNumber": 3,
+        "title": "Longest Common Subsequence",
+        "url": "https://leetcode.com/problems/longest-common-subsequence/",
+        "difficulty": "Medium",
+        "note": "The canonical two-string comparison DP with match/no-match branching."
+      },
+      {
+        "dayNumber": 4,
+        "title": "Best Time to Buy and Sell Stock with Cooldown",
+        "url": "https://leetcode.com/problems/best-time-to-buy-and-sell-stock-with-cooldown/",
+        "difficulty": "Medium",
+        "note": "State-machine DP with holding/cooldown/not-holding states."
+      },
+      {
+        "dayNumber": 5,
+        "title": "Coin Change II",
+        "url": "https://leetcode.com/problems/coin-change-ii/",
+        "difficulty": "Medium",
+        "note": "Unbounded-knapsack DP counting combinations; iteration order (coins outer) avoids overcounting permutations."
+      },
+      {
+        "dayNumber": 6,
+        "title": "Interleaving String",
+        "url": "https://leetcode.com/problems/interleaving-string/",
+        "difficulty": "Medium",
+        "note": "Two-index DP over which source string contributed the next character of the interleaved result."
+      },
+      {
+        "dayNumber": 7,
+        "title": "Edit Distance",
+        "url": "https://leetcode.com/problems/edit-distance/",
+        "difficulty": "Hard",
+        "note": "Three-way (insert/delete/replace) 2-D DP recurrence; the week's capstone two-string problem."
+      }
+    ]
+  },
+  {
+    "weekNumber": 15,
+    "startDate": "2026-12-21",
+    "endDate": "2026-12-27",
+    "topic": "Greedy",
+    "explanation": "A greedy algorithm always makes the choice that looks best right now, without reconsidering past choices \u2014 and it only produces a globally optimal answer when the problem has the greedy-choice property. The standard way to justify a greedy solution is an exchange argument: show that if an optimal solution ever deviated from the greedy choice, you could swap it back without making the solution worse.\n\n**Key patterns:**\n\n- **Unlimited-transaction profit** \u2014 greedily capture every positive day-to-day price increase; summing every upward delta equals the best achievable total when trades are unrestricted.\n- **Running-best scans (Kadane's)** \u2014 at each element, decide to extend the previous run or start fresh, keeping whichever is larger.\n- **Farthest-reach tracking** \u2014 scan left to right tracking the farthest index reachable so far, incrementing a jump counter only when forced into the next range.\n- **Failure-point elimination** \u2014 if a running total goes negative from a candidate start, every index between the old start and here is invalid too \u2014 jump straight past the failure.\n- **Last-occurrence partitioning** \u2014 close a partition the instant every element seen so far has no remaining occurrence ahead.\n- **Two-pass directional constraints** \u2014 satisfy a \"greater than left neighbor\" rule left-to-right, then \"greater than right neighbor\" right-to-left, and take the max of both passes.\n\n**Before trusting a greedy choice, find the exchange argument.** Without one, you're not being greedy \u2014 you're just hoping it works, and \"sometimes it works\" is exactly when you actually need DP instead.",
+    "codeSnippet": "best = float('-inf')\nrunning = 0\nfor x in nums:\n    running = max(x, running + x)\n    best = max(best, running)\nreturn best",
+    "codeCaption": "FIG 1 \u00b7 THE RUNNING-BEST SHAPE",
+    "pitfall": "Before trusting a greedy choice, find the exchange argument: why can a smarter-looking alternative never beat this one? **Without that proof you're not being greedy, you're just hoping.**",
+    "questions": [
+      {
+        "dayNumber": 1,
+        "title": "Best Time to Buy and Sell Stock II",
+        "url": "https://leetcode.com/problems/best-time-to-buy-and-sell-stock-ii/",
+        "difficulty": "Medium",
+        "note": "Greedily capture every positive price delta; unlimited transactions make local greed globally optimal."
+      },
+      {
+        "dayNumber": 2,
+        "title": "Maximum Subarray",
+        "url": "https://leetcode.com/problems/maximum-subarray/",
+        "difficulty": "Medium",
+        "note": "Kadane's algorithm: greedily decide to extend or restart the running subarray at each element."
+      },
+      {
+        "dayNumber": 3,
+        "title": "Jump Game",
+        "url": "https://leetcode.com/problems/jump-game/",
+        "difficulty": "Medium",
+        "note": "Greedily track the farthest reachable index while scanning left to right."
+      },
+      {
+        "dayNumber": 4,
+        "title": "Jump Game II",
+        "url": "https://leetcode.com/problems/jump-game-ii/",
+        "difficulty": "Medium",
+        "note": "Extends Jump Game to greedily minimize jump count by tracking current-range and next-range reach."
+      },
+      {
+        "dayNumber": 5,
+        "title": "Gas Station",
+        "url": "https://leetcode.com/problems/gas-station/",
+        "difficulty": "Medium",
+        "note": "Greedy elimination: a failing running total rules out every start point up to the failure index."
+      },
+      {
+        "dayNumber": 6,
+        "title": "Partition Labels",
+        "url": "https://leetcode.com/problems/partition-labels/",
+        "difficulty": "Medium",
+        "note": "Greedily close a partition once every character seen so far has no remaining occurrence ahead."
+      },
+      {
+        "dayNumber": 7,
+        "title": "Candy",
+        "url": "https://leetcode.com/problems/candy/",
+        "difficulty": "Hard",
+        "note": "Two-pass greedy (left-to-right then right-to-left) taking the max at each position to satisfy both neighbor constraints."
+      }
+    ]
+  },
+  {
+    "weekNumber": 16,
+    "startDate": "2026-12-28",
+    "endDate": "2027-01-03",
+    "topic": "Intervals",
+    "explanation": "Interval problems represent ranges as `[start, end]` pairs and almost always begin with sorting \u2014 because sortedness turns overlap and merge logic into a single linear scan instead of an `O(n^2)` pairwise comparison. Two intervals overlap exactly when `a <= d && c <= b` \u2014 internalize that one check and most of this unit follows.\n\n**Key patterns:**\n\n- **Sort-by-start merging** \u2014 walk the sorted list, extending the last kept interval's end whenever the next one overlaps it, otherwise starting a new one.\n- **Three-phase insertion** \u2014 for inserting into an already-sorted, non-overlapping list: copy intervals ending before the new one starts, merge everything that overlaps it, then copy the rest.\n- **Online overlap checking** \u2014 for each new booking request, check it against every already-accepted interval before accepting it.\n- **Two-pointer intersection** \u2014 walk two already-disjoint sorted lists together, emitting each pairwise overlap and advancing whichever interval ends first.\n- **Sort-by-end greedy removal** \u2014 for \"minimum removals to eliminate all overlaps,\" sort by end time and greedily keep an interval only if it starts at or after the last kept interval's end.\n- **Sweep-line with a heap** \u2014 for skyline-style problems, track the maximum height among all active intervals as the sweep crosses each critical coordinate.\n\n**Sort by start for merging, but by end for \"minimum removal\" problems** \u2014 using the wrong key is the most common bug in this entire topic.",
+    "codeSnippet": "intervals.sort(key=lambda iv: iv[0])\nmerged = [intervals[0]]\nfor start, end in intervals[1:]:\n    if start <= merged[-1][1]:\n        merged[-1][1] = max(merged[-1][1], end)\n    else:\n        merged.append([start, end])",
+    "codeCaption": "FIG 1 \u00b7 THE SORT-THEN-SWEEP SHAPE",
+    "pitfall": "Sort by start for merging, but by end for 'minimum removals to eliminate overlaps' style problems. **Using the wrong sort key is the most common bug** in this entire topic.",
+    "questions": [
+      {
+        "dayNumber": 1,
+        "title": "Merge Intervals",
+        "url": "https://leetcode.com/problems/merge-intervals/",
+        "difficulty": "Medium",
+        "note": "Sort by start, then linear-scan merge whenever the current interval overlaps the last kept one."
+      },
+      {
+        "dayNumber": 2,
+        "title": "Insert Interval",
+        "url": "https://leetcode.com/problems/insert-interval/",
+        "difficulty": "Medium",
+        "note": "Three-phase scan: unchanged-before, merge-overlapping, unchanged-after."
+      },
+      {
+        "dayNumber": 3,
+        "title": "Interval List Intersections",
+        "url": "https://leetcode.com/problems/interval-list-intersections/",
+        "difficulty": "Medium",
+        "note": "Two-pointer walk across two disjoint sorted interval lists, emitting each pairwise overlap."
+      },
+      {
+        "dayNumber": 4,
+        "title": "Non-overlapping Intervals",
+        "url": "https://leetcode.com/problems/non-overlapping-intervals/",
+        "difficulty": "Medium",
+        "note": "Sort by end time, greedily keep non-overlapping intervals to minimize removals."
+      },
+      {
+        "dayNumber": 5,
+        "title": "Minimum Number of Arrows to Burst Balloons",
+        "url": "https://leetcode.com/problems/minimum-number-of-arrows-to-burst-balloons/",
+        "difficulty": "Medium",
+        "note": "Sort-by-end greedy overlap counting, framed as minimizing shots instead of maximizing kept intervals."
+      },
+      {
+        "dayNumber": 6,
+        "title": "My Calendar I",
+        "url": "https://leetcode.com/problems/my-calendar-i/",
+        "difficulty": "Medium",
+        "note": "Online interval booking: check the new interval against every existing booking for the overlap condition."
+      },
+      {
+        "dayNumber": 7,
+        "title": "The Skyline Problem",
+        "url": "https://leetcode.com/problems/the-skyline-problem/",
+        "difficulty": "Hard",
+        "note": "Sweep-line over critical x-coordinates with a max-heap of active building heights; the week's capstone."
+      }
+    ]
+  },
+  {
+    "weekNumber": 17,
+    "startDate": "2027-01-04",
+    "endDate": "2027-01-10",
+    "topic": "Math, Geometry & Bit Manipulation",
+    "explanation": "This capstone week collects lower-frequency but still common interview topics built from small, mostly independent tricks rather than one unifying pattern. Bit manipulation exploits how integers are stored in binary, and a handful of operations recur constantly.\n\n**Key patterns:**\n\n- **XOR cancellation** \u2014 `a ^ a = 0` and `a ^ 0 = a`; XOR-ing every element cancels exact duplicate pairs and leaves the singleton behind.\n- **Expected-vs-actual sum (or XOR-of-range)** \u2014 finds a single missing value in `O(n)` time and `O(1)` space.\n- **Lowest-set-bit clearing** \u2014 `n & (n - 1)` clears the lowest set bit, giving Brian Kernighan's `O(popcount)` bit-counting and a fast power-of-two check.\n- **Reused-subproblem bit counting** \u2014 `countBits[i]` derived from `countBits[i >> 1]`, avoiding a full recount for every number.\n- **Shift-and-append reversal** \u2014 reverse a 32-bit integer's bits by shifting the input right and the result left, one bit at a time.\n- **Carry-separated addition** \u2014 implement `+` using XOR (sum ignoring carries) and `AND` shifted left by one (the carries), repeating until no carries remain.\n- **Slope-grouping for collinearity** \u2014 for each fixed point, group every other point by its slope relative to that point; the largest group is the answer.\n\n**The XOR-cancellation trick only works for values appearing an even number of times.** The moment a value can appear three times instead of two, this exact trick breaks, and you need a different bit-counting approach \u2014 this week's skill is recognizing which small trick applies, fast.",
+    "codeSnippet": "x = 0\nfor n in nums:\n    x ^= n\nreturn x",
+    "codeCaption": "FIG 1 \u00b7 THE XOR-CANCELLATION SHAPE",
+    "pitfall": "XOR only cancels values that appear an even number of times. **The instant a value can appear three times instead of two, this exact trick breaks** and you need a different bit-counting approach.",
+    "questions": [
+      {
+        "dayNumber": 1,
+        "title": "Single Number",
+        "url": "https://leetcode.com/problems/single-number/",
+        "difficulty": "Easy",
+        "note": "XOR cancellation trick: XOR-ing every element leaves only the non-duplicated one."
+      },
+      {
+        "dayNumber": 2,
+        "title": "Missing Number",
+        "url": "https://leetcode.com/problems/missing-number/",
+        "difficulty": "Easy",
+        "note": "Expected-sum-minus-actual-sum (or XOR-of-range) trick to find the one missing value in O(n)/O(1)."
+      },
+      {
+        "dayNumber": 3,
+        "title": "Number of 1 Bits",
+        "url": "https://leetcode.com/problems/number-of-1-bits/",
+        "difficulty": "Easy",
+        "note": "Brian Kernighan's n & (n-1) trick to count set bits in O(popcount) time."
+      },
+      {
+        "dayNumber": 4,
+        "title": "Counting Bits",
+        "url": "https://leetcode.com/problems/counting-bits/",
+        "difficulty": "Easy",
+        "note": "DP over bit counts: reuse the answer for i with its lowest set bit removed."
+      },
+      {
+        "dayNumber": 5,
+        "title": "Reverse Bits",
+        "url": "https://leetcode.com/problems/reverse-bits/",
+        "difficulty": "Easy",
+        "note": "Shift-and-append bit reversal of a 32-bit unsigned integer."
+      },
+      {
+        "dayNumber": 6,
+        "title": "Sum of Two Integers",
+        "url": "https://leetcode.com/problems/sum-of-two-integers/",
+        "difficulty": "Medium",
+        "note": "Implement addition using XOR (sum without carry) and AND+shift (carry) until no carries remain."
+      },
+      {
+        "dayNumber": 7,
+        "title": "Max Points on a Line",
+        "url": "https://leetcode.com/problems/max-points-on-a-line/",
+        "difficulty": "Hard",
+        "note": "Geometry capstone: group points by slope relative to each fixed point to find the largest collinear set."
+      }
+    ]
+  }
+] as const;
