@@ -56,6 +56,25 @@ export const processRollover = internalMutation({
   },
 });
 
+export const getNewQuestionNotifications = internalQuery({
+  args: { today: v.string() },
+  handler: async (ctx, args) => {
+    const question = await ctx.db
+      .query("questions")
+      .withIndex("by_date", (q) => q.eq("date", args.today))
+      .unique();
+    if (question === null) return [];
+
+    const profiles = await ctx.db.query("profiles").take(1000);
+    return profiles.map((p) => ({
+      userId: p.userId,
+      title: "New stage is live",
+      body: question.title,
+      url: "/today",
+    }));
+  },
+});
+
 export const getPendingReminders = internalQuery({
   args: { today: v.string() },
   handler: async (ctx, args) => {
@@ -108,7 +127,12 @@ export const getMyRecentDays = query({
 export const dailyRolloverAction = internalAction({
   args: {},
   handler: async (ctx) => {
-    const notifications = await ctx.runMutation(internal.streaks.processRollover, { now: Date.now() });
+    const now = Date.now();
+    const rankNotifications = await ctx.runMutation(internal.streaks.processRollover, { now });
+    const newQuestionNotifications = await ctx.runQuery(internal.streaks.getNewQuestionNotifications, {
+      today: todayStr(now),
+    });
+    const notifications = [...rankNotifications, ...newQuestionNotifications];
     if (notifications.length > 0) {
       await ctx.runAction(internal.pushSend.sendBatch, { notifications });
     }
