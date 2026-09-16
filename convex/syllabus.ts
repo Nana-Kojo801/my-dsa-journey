@@ -150,6 +150,13 @@ export const getTodayContext = query({
   },
 });
 
+export const getAllWeeks = query({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db.query("weeks").withIndex("by_weekNumber").order("asc").take(100);
+  },
+});
+
 export const getSeasonBounds = query({
   args: {},
   handler: async (ctx) => {

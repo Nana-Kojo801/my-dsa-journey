@@ -30,9 +30,10 @@ const EMPTY_COPY: Record<Filter, string> = {
 // ── History sub-page ─────────────────────────────────────────────────────────
 
 function HistoryPanel() {
-  const seasonBounds = useQuery(api.syllabus.getSeasonBounds)
+  const allWeeks = useQuery(api.syllabus.getAllWeeks)
   const [selectedWeek, setSelectedWeek] = useState<number | null>(null)
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
+  const [detailUser, setDetailUser] = useState<{ userId: Id<'users'>; handle: string } | null>(null)
 
   const weekQuestions = useQuery(
     api.syllabus.getQuestionsForWeek,
@@ -42,32 +43,39 @@ function HistoryPanel() {
     api.leaderboard.getLeaderboardForDate,
     selectedDate !== null ? { date: selectedDate } : 'skip',
   )
-
-  const firstWeek = seasonBounds?.first?.weekNumber ?? 1
-  const lastWeek = seasonBounds?.last?.weekNumber ?? 1
-  const weeks = Array.from({ length: lastWeek - firstWeek + 1 }, (_, i) => firstWeek + i)
+  const historyBreakdown = useQuery(
+    api.leaderboard.getUserBreakdownForDate,
+    detailUser && selectedDate ? { userId: detailUser.userId, date: selectedDate } : 'skip',
+  )
 
   return (
     <div>
       <div className="mb-6 font-mono text-[10.4px] font-medium tracking-[0.2em] text-faint">
         CHOOSE A LEVEL
       </div>
-      <div className="mb-8 flex flex-wrap gap-2">
-        {weeks.map((w) => (
-          <button
-            key={w}
-            onClick={() => { setSelectedWeek(w); setSelectedDate(null) }}
-            className="cursor-pointer border px-4 py-2 font-mono text-[11px] font-medium tracking-[0.12em] transition-colors"
-            style={{
-              borderColor: selectedWeek === w ? RED : 'rgba(20,22,26,.2)',
-              color: selectedWeek === w ? RED : '#6E7178',
-              background: selectedWeek === w ? 'rgba(200,54,43,.05)' : 'transparent',
-            }}
-          >
-            L{String(w).padStart(2, '0')}
-          </button>
-        ))}
-      </div>
+      {allWeeks === undefined ? (
+        <div className="mb-8 flex flex-wrap gap-2">
+          {Array.from({ length: 4 }, (_, i) => <Skel key={i} className="h-10 w-36" />)}
+        </div>
+      ) : (
+        <div className="mb-8 flex flex-wrap gap-2">
+          {allWeeks.map((w) => (
+            <button
+              key={w.weekNumber}
+              onClick={() => { setSelectedWeek(w.weekNumber); setSelectedDate(null); setDetailUser(null) }}
+              className="cursor-pointer border px-4 py-2 text-left font-mono transition-colors"
+              style={{
+                borderColor: selectedWeek === w.weekNumber ? RED : 'rgba(20,22,26,.2)',
+                color: selectedWeek === w.weekNumber ? RED : '#6E7178',
+                background: selectedWeek === w.weekNumber ? 'rgba(200,54,43,.05)' : 'transparent',
+              }}
+            >
+              <div className="text-[9.5px] font-medium tracking-[0.14em]">L{String(w.weekNumber).padStart(2, '0')}</div>
+              <div className="mt-0.5 max-w-[160px] truncate text-[11.5px]">{w.topic}</div>
+            </button>
+          ))}
+        </div>
+      )}
 
       {selectedWeek !== null && (
         <>
@@ -83,7 +91,7 @@ function HistoryPanel() {
               {weekQuestions.map((q) => (
                 <button
                   key={q._id}
-                  onClick={() => setSelectedDate(q.date)}
+                  onClick={() => { setSelectedDate(q.date); setDetailUser(null) }}
                   className="cursor-pointer border px-4 py-2 text-left font-mono transition-colors"
                   style={{
                     borderColor: selectedDate === q.date ? RED : 'rgba(20,22,26,.2)',
@@ -123,14 +131,16 @@ function HistoryPanel() {
               {dayLeaderboard.map((r) => (
                 <div
                   key={r.handle}
-                  className="flex items-baseline gap-2.5 border-b border-dotted border-ink/20 py-3"
+                  onClick={() => setDetailUser({ userId: r.userId, handle: r.handle })}
+                  className="flex cursor-pointer items-baseline gap-2.5 border-b border-dotted border-ink/20 py-3 transition-colors hover:bg-ink/[.03]"
                   style={{ background: r.isMe ? 'rgba(200,54,43,.05)' : 'transparent' }}
                 >
                   <div className="w-9.5 font-mono text-[11.5px] text-faint">[{String(r.rank).padStart(2, '0')}]</div>
                   <div className="min-w-0 flex-1">
                     <Link
                       to={`/runner/${r.handle}`}
-                      className="overflow-hidden text-ellipsis whitespace-nowrap font-sans text-[17.3px] font-medium no-underline"
+                      onClick={(e) => e.stopPropagation()}
+                      className="block overflow-hidden text-ellipsis whitespace-nowrap font-sans text-[17.3px] font-medium no-underline hover:text-red"
                       style={{ color: r.isMe ? RED : INK }}
                     >
                       {r.handle}
@@ -142,6 +152,15 @@ function HistoryPanel() {
             </>
           )}
         </>
+      )}
+
+      {detailUser && (
+        <ScoreBreakdownModal
+          handle={detailUser.handle}
+          mode="daily"
+          rows={historyBreakdown === undefined ? undefined : historyBreakdown === null ? null : historyBreakdown.submissions}
+          onClose={() => setDetailUser(null)}
+        />
       )}
     </div>
   )
@@ -370,6 +389,7 @@ export default function BoardPage() {
       {rows.map((r) => (
         <div
           key={r.handle}
+          onClick={() => setDetailUser({ userId: r.userId, handle: r.handle })}
           className="flex cursor-pointer items-baseline gap-2.5 border-b border-dotted border-ink/20 py-3 transition-colors hover:bg-ink/[.03]"
           style={{ background: r.isMe ? 'rgba(200,54,43,.05)' : 'transparent' }}
         >
@@ -377,8 +397,8 @@ export default function BoardPage() {
           <div className="min-w-0 flex-1">
             <Link
               to={`/runner/${r.handle}`}
-              onClick={(e) => { e.preventDefault(); setDetailUser({ userId: r.userId, handle: r.handle }) }}
-              className="block overflow-hidden text-ellipsis whitespace-nowrap font-sans text-[17.3px] font-medium no-underline hover:text-red"
+              onClick={(e) => e.stopPropagation()}
+              className="block overflow-hidden text-ellipsis whitespace-nowrap font-sans text-[17.3px] font-medium no-underline hover:underline"
               style={{ color: r.isMe ? RED : INK }}
             >
               {r.handle}

@@ -222,6 +222,13 @@ export const getWeekReveal = query({
   },
 });
 
+export const getUserBreakdownForDate = query({
+  args: { userId: v.id("users"), date: v.string() },
+  handler: async (ctx, args) => {
+    return await userSubmissionsBreakdown(ctx, args.userId, args.date, args.date);
+  },
+});
+
 export const getLeaderboardForDate = query({
   args: { date: v.string() },
   handler: async (ctx, args) => {

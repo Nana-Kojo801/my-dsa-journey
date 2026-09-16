@@ -85,7 +85,10 @@ export const searchHandles = query({
   args: { prefix: v.string() },
   handler: async (ctx, args) => {
     const prefix = args.prefix.toLowerCase().slice(0, 20);
-    if (prefix.length === 0) return [];
+    if (prefix.length === 0) {
+      const results = await ctx.db.query("profiles").withIndex("by_handleLower").take(8);
+      return results.map((p) => p.handle);
+    }
     const results = await ctx.db
       .query("profiles")
       .withIndex("by_handleLower", (q) => q.gte("handleLower", prefix).lt("handleLower", prefix + "￿"))
