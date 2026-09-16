@@ -136,11 +136,11 @@ function HistoryPanel() {
                   style={{ background: r.isMe ? 'rgba(200,54,43,.05)' : 'transparent' }}
                 >
                   <div className="w-9.5 font-mono text-[11.5px] text-faint">[{String(r.rank).padStart(2, '0')}]</div>
-                  <div className="min-w-0 flex-1">
+                  <div className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
                     <Link
                       to={`/runner/${r.handle}`}
                       onClick={(e) => e.stopPropagation()}
-                      className="block overflow-hidden text-ellipsis whitespace-nowrap font-sans text-[17.3px] font-medium no-underline hover:text-red"
+                      className="font-sans text-[17.3px] font-medium no-underline hover:underline"
                       style={{ color: r.isMe ? RED : INK }}
                     >
                       {r.handle}
@@ -394,11 +394,11 @@ export default function BoardPage() {
           style={{ background: r.isMe ? 'rgba(200,54,43,.05)' : 'transparent' }}
         >
           <div className="w-9.5 font-mono text-[11.5px] text-faint">[{String(r.rank).padStart(2, '0')}]</div>
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
             <Link
               to={`/runner/${r.handle}`}
               onClick={(e) => e.stopPropagation()}
-              className="block overflow-hidden text-ellipsis whitespace-nowrap font-sans text-[17.3px] font-medium no-underline hover:underline"
+              className="font-sans text-[17.3px] font-medium no-underline hover:underline"
               style={{ color: r.isMe ? RED : INK }}
             >
               {r.handle}
