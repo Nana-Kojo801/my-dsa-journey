@@ -70,6 +70,30 @@ export const getMyProfile = query({
   },
 });
 
+export const getPublicProfile = query({
+  args: { handle: v.string() },
+  handler: async (ctx, args) => {
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_handleLower", (q) => q.eq("handleLower", args.handle.toLowerCase()))
+      .unique();
+    return profile;
+  },
+});
+
+export const searchHandles = query({
+  args: { prefix: v.string() },
+  handler: async (ctx, args) => {
+    const prefix = args.prefix.toLowerCase().slice(0, 20);
+    if (prefix.length === 0) return [];
+    const results = await ctx.db
+      .query("profiles")
+      .withIndex("by_handleLower", (q) => q.gte("handleLower", prefix).lt("handleLower", prefix + "￿"))
+      .take(8);
+    return results.map((p) => p.handle);
+  },
+});
+
 export const renameHandle = mutation({
   args: { newHandle: v.string() },
   handler: async (ctx, args) => {

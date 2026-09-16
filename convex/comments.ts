@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { internal } from "./_generated/api";
 
 export const postComment = mutation({
   args: { questionId: v.id("questions"), body: v.string(), parentId: v.optional(v.id("comments")) },
@@ -19,13 +20,61 @@ export const postComment = mutation({
       .take(11);
     if (recent.length >= 10) throw new Error("Slow down — max 10 comments per hour.");
 
-    return await ctx.db.insert("comments", {
+    const commentId = await ctx.db.insert("comments", {
       questionId: args.questionId,
       userId,
       parentId: args.parentId,
       body,
       createdAt: Date.now(),
     });
+
+    // Notify parent comment author on reply
+    if (args.parentId !== undefined) {
+      const parent = await ctx.db.get(args.parentId);
+      if (parent !== null && parent.userId !== userId) {
+        const replierProfile = await ctx.db
+          .query("profiles")
+          .withIndex("by_user", (q) => q.eq("userId", userId))
+          .unique();
+        const question = await ctx.db.get(args.questionId);
+        const replierHandle = replierProfile?.handle ?? "Someone";
+        const stageTitle = question?.title ?? "a stage";
+        await ctx.scheduler.runAfter(0, internal.pushSend.sendToUser, {
+          userId: parent.userId,
+          title: `${replierHandle} replied to your note`,
+          body: `On "${stageTitle}": ${body.slice(0, 80)}${body.length > 80 ? "…" : ""}`,
+          url: `/question/${args.questionId}/comments`,
+        });
+      }
+    }
+
+    return commentId;
+  },
+});
+
+export const deleteComment = mutation({
+  args: { commentId: v.id("comments") },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) throw new Error("Not authenticated");
+    const comment = await ctx.db.get(args.commentId);
+    if (comment === null) throw new Error("Comment not found");
+
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .unique();
+    const isAdmin = profile?.isAdmin ?? false;
+
+    if (comment.userId !== userId && !isAdmin) throw new Error("Not your comment");
+
+    // delete replies first
+    const replies = await ctx.db
+      .query("comments")
+      .withIndex("by_parent", (q) => q.eq("parentId", args.commentId))
+      .take(200);
+    for (const r of replies) await ctx.db.delete(r._id);
+    await ctx.db.delete(args.commentId);
   },
 });
 

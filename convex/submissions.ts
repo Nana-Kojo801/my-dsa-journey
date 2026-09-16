@@ -182,6 +182,20 @@ export const getMyHistory = query({
   },
 });
 
+export const getHistoryForUser = query({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const subs = await ctx.db
+      .query("submissions")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .order("desc")
+      .take(30);
+    return await Promise.all(
+      subs.map(async (s) => ({ submission: s, question: await ctx.db.get(s.questionId) })),
+    );
+  },
+});
+
 export const getQuestionSubmissionCount = query({
   args: { questionId: v.id("questions") },
   handler: async (ctx, args) => {

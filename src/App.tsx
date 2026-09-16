@@ -4,6 +4,7 @@ import { RequireAuth } from './components/RequireAuth'
 import { AppShell } from './components/AppShell'
 import { ErrorBoundary } from './components/ErrorBoundary'
 
+import RunnerPage from './pages/RunnerPage'
 import LandingPage from './pages/LandingPage'
 import PublicTreePage from './pages/PublicTreePage'
 import AuthPage from './pages/AuthPage'
@@ -31,6 +32,11 @@ function StageRoute() {
 function CommentsRoute() {
   const { questionId } = useParams()
   return <CommentsPage questionId={questionId as string} />
+}
+
+function RunnerRoute() {
+  const { handle } = useParams()
+  return <RunnerPage handle={handle as string} />
 }
 
 function RevealRoute() {
@@ -143,6 +149,17 @@ export default function App() {
             <RequireAuth>
               <AppShell>
                 <AdminPage />
+              </AppShell>
+            </RequireAuth>
+          }
+        />
+
+        <Route
+          path="/runner/:handle"
+          element={
+            <RequireAuth>
+              <AppShell>
+                <RunnerRoute />
               </AppShell>
             </RequireAuth>
           }

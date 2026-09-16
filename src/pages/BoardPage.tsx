@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react'
+import { Link } from 'react-router-dom'
 import { useQuery } from 'convex/react'
 import { api } from '../../convex/_generated/api'
 import type { Id } from '../../convex/_generated/dataModel'
@@ -26,24 +27,147 @@ const EMPTY_COPY: Record<Filter, string> = {
   Overall: 'The season just started — nobody has a score yet.',
 }
 
+// ── History sub-page ─────────────────────────────────────────────────────────
+
+function HistoryPanel() {
+  const seasonBounds = useQuery(api.syllabus.getSeasonBounds)
+  const [selectedWeek, setSelectedWeek] = useState<number | null>(null)
+  const [selectedDate, setSelectedDate] = useState<string | null>(null)
+
+  const weekQuestions = useQuery(
+    api.syllabus.getQuestionsForWeek,
+    selectedWeek !== null ? { weekNumber: selectedWeek } : 'skip',
+  )
+  const dayLeaderboard = useQuery(
+    api.leaderboard.getLeaderboardForDate,
+    selectedDate !== null ? { date: selectedDate } : 'skip',
+  )
+
+  const firstWeek = seasonBounds?.first?.weekNumber ?? 1
+  const lastWeek = seasonBounds?.last?.weekNumber ?? 1
+  const weeks = Array.from({ length: lastWeek - firstWeek + 1 }, (_, i) => firstWeek + i)
+
+  return (
+    <div>
+      <div className="mb-6 font-mono text-[10.4px] font-medium tracking-[0.2em] text-faint">
+        CHOOSE A LEVEL
+      </div>
+      <div className="mb-8 flex flex-wrap gap-2">
+        {weeks.map((w) => (
+          <button
+            key={w}
+            onClick={() => { setSelectedWeek(w); setSelectedDate(null) }}
+            className="cursor-pointer border px-4 py-2 font-mono text-[11px] font-medium tracking-[0.12em] transition-colors"
+            style={{
+              borderColor: selectedWeek === w ? RED : 'rgba(20,22,26,.2)',
+              color: selectedWeek === w ? RED : '#6E7178',
+              background: selectedWeek === w ? 'rgba(200,54,43,.05)' : 'transparent',
+            }}
+          >
+            L{String(w).padStart(2, '0')}
+          </button>
+        ))}
+      </div>
+
+      {selectedWeek !== null && (
+        <>
+          <div className="mb-4 font-mono text-[10.4px] font-medium tracking-[0.2em] text-faint">
+            CHOOSE A STAGE
+          </div>
+          {weekQuestions === undefined ? (
+            <div className="mb-8 flex flex-wrap gap-2">
+              {Array.from({ length: 7 }, (_, i) => <Skel key={i} className="h-9 w-28" />)}
+            </div>
+          ) : (
+            <div className="mb-8 flex flex-wrap gap-2">
+              {weekQuestions.map((q) => (
+                <button
+                  key={q._id}
+                  onClick={() => setSelectedDate(q.date)}
+                  className="cursor-pointer border px-4 py-2 text-left font-mono transition-colors"
+                  style={{
+                    borderColor: selectedDate === q.date ? RED : 'rgba(20,22,26,.2)',
+                    color: selectedDate === q.date ? RED : '#6E7178',
+                    background: selectedDate === q.date ? 'rgba(200,54,43,.05)' : 'transparent',
+                  }}
+                >
+                  <div className="text-[9.5px] font-medium tracking-[0.14em]">S{q.dayNumber} · {q.date}</div>
+                  <div className="mt-0.5 max-w-[160px] truncate text-[11.5px]">{q.title}</div>
+                </button>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {selectedDate !== null && (
+        <>
+          <div className="mb-3 font-mono text-[10.4px] font-medium tracking-[0.2em] text-faint">
+            LEADERBOARD FOR {selectedDate}
+          </div>
+          {dayLeaderboard === undefined ? (
+            Array.from({ length: 5 }, (_, i) => <SkelRow key={i} className="border-b border-dotted border-ink/20" />)
+          ) : dayLeaderboard.length === 0 ? (
+            <EmptyState
+              bordered={false}
+              title="No submissions for this stage."
+              body="Nobody's cleared this stage, or scores haven't been recorded yet."
+            />
+          ) : (
+            <>
+              <div className="flex items-baseline gap-2.5 border-b border-ink/30 pb-2.5 font-mono text-[9.8px] font-medium tracking-[0.16em] text-faint">
+                <div className="w-9.5">#</div>
+                <div className="flex-1">HANDLE</div>
+                <div className="w-16.5 text-right">SCORE</div>
+              </div>
+              {dayLeaderboard.map((r) => (
+                <div
+                  key={r.handle}
+                  className="flex items-baseline gap-2.5 border-b border-dotted border-ink/20 py-3"
+                  style={{ background: r.isMe ? 'rgba(200,54,43,.05)' : 'transparent' }}
+                >
+                  <div className="w-9.5 font-mono text-[11.5px] text-faint">[{String(r.rank).padStart(2, '0')}]</div>
+                  <div className="min-w-0 flex-1">
+                    <Link
+                      to={`/runner/${r.handle}`}
+                      className="overflow-hidden text-ellipsis whitespace-nowrap font-sans text-[17.3px] font-medium no-underline"
+                      style={{ color: r.isMe ? RED : INK }}
+                    >
+                      {r.handle}
+                    </Link>
+                  </div>
+                  <ScoreCell value={r.score} className="w-16.5 text-right font-mono text-[19.5px]" />
+                </div>
+              ))}
+            </>
+          )}
+        </>
+      )}
+    </div>
+  )
+}
+
+// ── Main board page ───────────────────────────────────────────────────────────
+
 export default function BoardPage() {
-  const [filter, setFilter] = useState<Filter>('Overall')
-  const rows = useQuery(api.leaderboard.getLeaderboard, { filter })
+  const [mode, setMode] = useState<Filter | 'History'>('Overall')
+  const filter = mode === 'History' ? null : mode
+  const rows = useQuery(api.leaderboard.getLeaderboard, filter !== null ? { filter } : 'skip')
 
   const [detailUser, setDetailUser] = useState<{ userId: Id<'users'>; handle: string } | null>(null)
   const breakdown = useQuery(
     api.leaderboard.getUserBreakdown,
-    detailUser ? { userId: detailUser.userId, filter } : 'skip',
+    detailUser && filter !== null ? { userId: detailUser.userId, filter } : 'skip',
   )
 
   const filterTabs = (
     <div className="flex flex-wrap gap-4.5">
-      {FILTERS.map((f) => (
+      {([...FILTERS, 'History'] as const).map((f) => (
         <button
           key={f}
-          onClick={() => setFilter(f)}
+          onClick={() => setMode(f)}
           className="cursor-pointer border-b pb-1.5 font-mono text-[10.4px] font-medium tracking-[0.14em]"
-          style={{ borderBottomColor: filter === f ? RED : 'transparent', color: filter === f ? INK : '#9A9CA1' }}
+          style={{ borderBottomColor: mode === f ? RED : 'transparent', color: mode === f ? INK : '#9A9CA1' }}
         >
           {f.toUpperCase()}
         </button>
@@ -55,13 +179,22 @@ export default function BoardPage() {
     <div className="mb-7.5 flex flex-wrap items-end justify-between gap-5">
       <div>
         <div className="mb-4 font-mono text-[10.4px] font-medium tracking-[0.2em] text-faint">
-          STANDINGS · SORTED DESC BY SCORE
+          {mode === 'History' ? 'PAST LEADERBOARDS' : 'STANDINGS · SORTED DESC BY SCORE'}
         </div>
         <div className="font-serif text-[34px] leading-[0.98] tracking-[-0.015em] md:text-[60px]">The board</div>
       </div>
       {filterTabs}
     </div>
   )
+
+  if (mode === 'History') {
+    return (
+      <div className="animate-fade mx-auto max-w-[1080px]">
+        {header}
+        <HistoryPanel />
+      </div>
+    )
+  }
 
   if (rows === undefined) {
     const barHeights = [38, 62, 84, 100, 70, 50, 30, 18]
@@ -108,7 +241,7 @@ export default function BoardPage() {
       <div className="animate-fade mx-auto max-w-[1080px]">
         {header}
         <EmptyState
-          title={EMPTY_COPY[filter]}
+          title={EMPTY_COPY[filter!]}
           body="Clear a stage and your handle is the first thing anyone sees when they open this filter."
           ctaLabel="GO TO TODAY'S STAGE →"
           ctaTo="/today"
@@ -202,10 +335,11 @@ export default function BoardPage() {
 
       <div className="mb-8.5 flex flex-wrap gap-3">
         {podium.map((p, i) => (
-          <div
+          <Link
             key={p.handle}
-            onClick={() => setDetailUser({ userId: p.userId, handle: p.handle })}
-            className={`min-w-[180px] flex-1 basis-[180px] cursor-pointer border border-ink/18 p-5 transition-shadow hover:shadow-[0_4px_18px_rgba(20,22,26,.1)] ${i === 0 ? 'animate-crown-glint' : ''}`}
+            to={`/runner/${p.handle}`}
+            onClick={(e) => { e.preventDefault(); setDetailUser({ userId: p.userId, handle: p.handle }) }}
+            className={`min-w-[180px] flex-1 basis-[180px] cursor-pointer border border-ink/18 p-5 no-underline transition-shadow hover:shadow-[0_4px_18px_rgba(20,22,26,.1)] ${i === 0 ? 'animate-crown-glint' : ''}`}
             style={{ background: i === 0 ? '#FFFDF6' : '#FFFFFF', borderTop: `3px solid ${MEDALS[i].top}` }}
           >
             <div className="mb-4.5 flex items-start justify-between gap-3">
@@ -219,10 +353,10 @@ export default function BoardPage() {
                 {p.rank}
               </div>
             </div>
-            <div className="mb-3 overflow-hidden text-ellipsis whitespace-nowrap font-serif text-[25px] md:text-[32px]">{p.handle}</div>
+            <div className="mb-3 overflow-hidden text-ellipsis whitespace-nowrap font-serif text-[25px] md:text-[32px]" style={{ color: INK }}>{p.handle}</div>
             <Row k="SCORE" v={<ScoreCell value={p.score} />} />
             <Row k="STREAK" v={`${p.currentStreak}d`} />
-          </div>
+          </Link>
         ))}
       </div>
 
@@ -236,15 +370,19 @@ export default function BoardPage() {
       {rows.map((r) => (
         <div
           key={r.handle}
-          onClick={() => setDetailUser({ userId: r.userId, handle: r.handle })}
           className="flex cursor-pointer items-baseline gap-2.5 border-b border-dotted border-ink/20 py-3 transition-colors hover:bg-ink/[.03]"
           style={{ background: r.isMe ? 'rgba(200,54,43,.05)' : 'transparent' }}
         >
           <div className="w-9.5 font-mono text-[11.5px] text-faint">[{String(r.rank).padStart(2, '0')}]</div>
           <div className="min-w-0 flex-1">
-            <div className="overflow-hidden text-ellipsis whitespace-nowrap font-sans text-[17.3px] font-medium" style={{ color: r.isMe ? RED : INK }}>
+            <Link
+              to={`/runner/${r.handle}`}
+              onClick={(e) => { e.preventDefault(); setDetailUser({ userId: r.userId, handle: r.handle }) }}
+              className="block overflow-hidden text-ellipsis whitespace-nowrap font-sans text-[17.3px] font-medium no-underline hover:text-red"
+              style={{ color: r.isMe ? RED : INK }}
+            >
               {r.handle}
-            </div>
+            </Link>
           </div>
           <div className="w-13.5 text-right font-mono text-[12.6px]" style={{ color: r.currentStreak >= 7 ? '#0A7A52' : '#6E7178' }}>
             {r.currentStreak}d

@@ -222,6 +222,24 @@ export const getWeekReveal = query({
   },
 });
 
+export const getLeaderboardForDate = query({
+  args: { date: v.string() },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    const ranked = await rankByDateRange(ctx, args.date, args.date);
+    return ranked
+      .filter((r) => r.score > 0)
+      .map((r, i) => ({
+        rank: i + 1,
+        userId: r.profile.userId,
+        handle: r.profile.handle,
+        score: r.score,
+        currentStreak: r.profile.currentStreak,
+        isMe: r.profile.userId === userId,
+      }));
+  },
+});
+
 export const getOverallLeaderboard = query({
   args: {},
   handler: async (ctx) => {

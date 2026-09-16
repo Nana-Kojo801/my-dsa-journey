@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useMutation, useQuery } from 'convex/react'
 import { api } from '../../convex/_generated/api'
@@ -9,6 +9,113 @@ import { useToast } from '../lib/toastContext'
 import { Skel, SkelLines } from '../components/Skeleton'
 import { EmptyState } from '../components/EmptyState'
 
+// ── mention autocomplete hook ───────────────────────────────────────────────
+
+function useMentionState() {
+  const [mentionQuery, setMentionQuery] = useState<string | null>(null)
+  const suggestions = useQuery(
+    api.profiles.searchHandles,
+    mentionQuery !== null ? { prefix: mentionQuery } : 'skip',
+  )
+  return { mentionQuery, setMentionQuery, suggestions: suggestions ?? [] }
+}
+
+interface MentionBoxProps {
+  value: string
+  onChange: (v: string) => void
+  placeholder?: string
+  className?: string
+  minRows?: number
+}
+
+function MentionBox({ value, onChange, placeholder, className, minRows = 3 }: MentionBoxProps) {
+  const { mentionQuery, setMentionQuery, suggestions } = useMentionState()
+  const [selectedIdx, setSelectedIdx] = useState(0)
+  const ref = useRef<HTMLTextAreaElement>(null)
+
+  // detect @prefix at the caret
+  function detectMention(text: string, caret: number) {
+    const before = text.slice(0, caret)
+    const match = before.match(/@([a-zA-Z0-9_]*)$/)
+    if (match) {
+      setMentionQuery(match[1])
+      setSelectedIdx(0)
+    } else {
+      setMentionQuery(null)
+    }
+  }
+
+  function handleChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
+    onChange(e.target.value)
+    detectMention(e.target.value, e.target.selectionStart ?? e.target.value.length)
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (mentionQuery === null || suggestions.length === 0) return
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setSelectedIdx((i) => (i + 1) % suggestions.length)
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setSelectedIdx((i) => (i - 1 + suggestions.length) % suggestions.length)
+    } else if (e.key === 'Enter' || e.key === 'Tab') {
+      e.preventDefault()
+      insertHandle(suggestions[selectedIdx])
+    } else if (e.key === 'Escape') {
+      setMentionQuery(null)
+    }
+  }
+
+  function insertHandle(handle: string) {
+    const ta = ref.current
+    if (!ta) return
+    const caret = ta.selectionStart ?? value.length
+    const before = value.slice(0, caret)
+    const after = value.slice(caret)
+    const replaced = before.replace(/@([a-zA-Z0-9_]*)$/, `@${handle} `)
+    onChange(replaced + after)
+    setMentionQuery(null)
+    // restore caret after state update
+    setTimeout(() => {
+      ta.selectionStart = ta.selectionEnd = replaced.length
+      ta.focus()
+    }, 0)
+  }
+
+  return (
+    <div className="relative">
+      <textarea
+        ref={ref}
+        value={value}
+        onChange={handleChange}
+        onKeyDown={handleKeyDown}
+        placeholder={placeholder}
+        rows={minRows}
+        className={className}
+      />
+      {mentionQuery !== null && suggestions.length > 0 && (
+        <ul className="absolute left-0 z-50 mt-1 w-56 border border-ink/20 bg-paper shadow-sm">
+          {suggestions.map((h, i) => (
+            <li key={h}>
+              <button
+                type="button"
+                onMouseDown={(e) => { e.preventDefault(); insertHandle(h) }}
+                className={`w-full cursor-pointer px-3.5 py-2 text-left font-mono text-[11.5px] tracking-[0.1em] ${
+                  i === selectedIdx ? 'bg-red text-paper' : 'text-ink hover:bg-ink/6'
+                }`}
+              >
+                @{h}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
+
+// ── page ─────────────────────────────────────────────────────────────────────
+
 export default function CommentsPage({ questionId }: { questionId: string }) {
   const qid = questionId as Id<'questions'>
   const flash = useToast()
@@ -16,6 +123,7 @@ export default function CommentsPage({ questionId }: { questionId: string }) {
   const comments = useQuery(api.comments.getComments, { questionId: qid })
   const profile = useQuery(api.profiles.getMyProfile)
   const postComment = useMutation(api.comments.postComment)
+  const deleteComment = useMutation(api.comments.deleteComment)
 
   const [draft, setDraft] = useState('')
   const [replyOpen, setReplyOpen] = useState<string | null>(null)
@@ -34,6 +142,10 @@ export default function CommentsPage({ questionId }: { questionId: string }) {
     await postComment({ questionId: qid, body, parentId })
     setReplyDraft('')
     setReplyOpen(null)
+  }
+
+  const del = async (commentId: Id<'comments'>) => {
+    await deleteComment({ commentId })
   }
 
   return (
@@ -57,11 +169,12 @@ export default function CommentsPage({ questionId }: { questionId: string }) {
       <div className="mb-6.5 border-b border-ink/14 pb-6.5" />
 
       <div className="mb-7.5 border-b border-ink/14 pb-7.5">
-        <textarea
+        <MentionBox
           value={draft}
-          onChange={(e) => setDraft(e.target.value)}
+          onChange={setDraft}
           placeholder="Write a note on your approach, or where you got stuck…"
-          className="w-full min-h-[86px] resize-y border border-ink/20 bg-paper p-3.5 font-sans text-[17.3px] leading-[1.65] outline-none focus:border-red"
+          minRows={4}
+          className="w-full resize-y border border-ink/20 bg-paper p-3.5 font-sans text-[17.3px] leading-[1.65] outline-none focus:border-red"
         />
         <div className="mt-3.5 flex flex-wrap items-center justify-between gap-3">
           <div className="font-mono text-[9.8px] font-medium tracking-[0.14em] text-faint">
@@ -86,26 +199,39 @@ export default function CommentsPage({ questionId }: { questionId: string }) {
       {comments?.map((c) => (
         <div key={c._id} className="mb-7 flex flex-wrap gap-5 border-b border-dotted border-ink/20 pb-7">
           <div className="min-w-0 flex-0 basis-[128px]">
-            <div className="mb-2 font-mono text-[12.6px] text-ink">{c.handle}</div>
+            <Link to={`/runner/${c.handle}`} className="mb-2 block font-mono text-[12.6px] text-ink no-underline hover:text-red">
+              {c.handle}
+            </Link>
             <div className="font-mono text-[9.8px] font-medium leading-[1.5] tracking-[0.12em] text-faint">
               {relativeTime(c.createdAt)} AGO
             </div>
           </div>
           <div className="min-w-0 flex-1 basis-[240px] border-l border-ink/14 pl-5">
-            <div className="whitespace-pre-wrap font-sans text-[17.3px] leading-[1.75] md:text-[19.5px]">{c.body}</div>
-            <button
-              onClick={() => setReplyOpen(replyOpen === c._id ? null : c._id)}
-              className="mt-2.5 cursor-pointer font-mono text-[9.8px] font-medium tracking-[0.14em] text-mute hover:text-red"
-            >
-              ↳ REPLY
-            </button>
+            <CommentBody body={c.body} />
+            <div className="mt-2.5 flex items-center gap-4">
+              <button
+                onClick={() => setReplyOpen(replyOpen === c._id ? null : c._id)}
+                className="cursor-pointer font-mono text-[9.8px] font-medium tracking-[0.14em] text-mute hover:text-red"
+              >
+                ↳ REPLY
+              </button>
+              {(c.userId === profile?.userId || profile?.isAdmin) && (
+                <button
+                  onClick={() => void del(c._id)}
+                  className="cursor-pointer font-mono text-[9.8px] font-medium tracking-[0.14em] text-faint hover:text-red"
+                >
+                  × DELETE
+                </button>
+              )}
+            </div>
             {replyOpen === c._id && (
               <div className="mt-3 border-l border-ink/18 pl-4.5">
-                <textarea
+                <MentionBox
                   value={replyDraft}
-                  onChange={(e) => setReplyDraft(e.target.value)}
+                  onChange={setReplyDraft}
                   placeholder={`Reply to ${c.handle}…`}
-                  className="w-full min-h-[56px] resize-y border border-ink/20 bg-paper p-3 font-sans text-[14.5px] outline-none focus:border-red"
+                  minRows={2}
+                  className="w-full resize-y border border-ink/20 bg-paper p-3 font-sans text-[14.5px] outline-none focus:border-red"
                 />
                 <div className="mt-2.5 flex items-center gap-3.5">
                   <PrimaryButton onClick={() => void reply(c._id)}>SEND REPLY</PrimaryButton>
@@ -118,10 +244,20 @@ export default function CommentsPage({ questionId }: { questionId: string }) {
             {c.replies.map((rp) => (
               <div key={rp._id} className="mt-4.5 border-l border-ink/18 pl-4.5">
                 <div className="mb-1.5 flex items-baseline gap-2.5">
-                  <div className="font-mono text-[11.5px] text-ink">{rp.handle}</div>
+                  <Link to={`/runner/${rp.handle}`} className="font-mono text-[11.5px] text-ink no-underline hover:text-red">
+                    {rp.handle}
+                  </Link>
                   <div className="font-mono text-[9.3px] font-medium tracking-[0.12em] text-faint">{relativeTime(rp.createdAt)} AGO</div>
+                  {(rp.userId === profile?.userId || profile?.isAdmin) && (
+                    <button
+                      onClick={() => void del(rp._id)}
+                      className="cursor-pointer font-mono text-[9px] font-medium tracking-[0.12em] text-faint hover:text-red"
+                    >
+                      × DELETE
+                    </button>
+                  )}
                 </div>
-                <div className="whitespace-pre-wrap font-sans text-[15px] leading-[1.68]">{rp.body}</div>
+                <CommentBody body={rp.body} className="font-sans text-[15px] leading-[1.68]" />
               </div>
             ))}
           </div>
@@ -137,6 +273,22 @@ export default function CommentsPage({ questionId }: { questionId: string }) {
           }
           body={`Nobody's written a note on ${question?.title ?? 'this stage'} yet. Approach, a stuck point, a clean trick — start the huddle.`}
         />
+      )}
+    </div>
+  )
+}
+
+// render @handles as highlighted spans
+function CommentBody({ body, className }: { body: string; className?: string }) {
+  const parts = body.split(/(@[a-zA-Z0-9_]+)/g)
+  return (
+    <div className={`whitespace-pre-wrap ${className ?? 'font-sans text-[17.3px] leading-[1.75] md:text-[19.5px]'}`}>
+      {parts.map((part, i) =>
+        /^@[a-zA-Z0-9_]+$/.test(part) ? (
+          <span key={i} className="font-mono text-red">{part}</span>
+        ) : (
+          part
+        ),
       )}
     </div>
   )

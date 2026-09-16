@@ -104,6 +104,24 @@ export const getPendingReminders = internalQuery({
   },
 });
 
+export const getRecentDaysForUser = query({
+  args: { userId: v.id("users"), days: v.number() },
+  handler: async (ctx, args) => {
+    const today = todayStr(Date.now());
+    const bounded = Math.min(Math.max(args.days, 1), 90);
+    const out: { date: string; status: "cleared" | "freeze" | "missed" | "future" | "unplayed" }[] = [];
+    for (let i = bounded - 1; i >= 0; i--) {
+      const date = addDaysStr(today, -i);
+      const entry = await ctx.db
+        .query("streakDays")
+        .withIndex("by_user_date", (q) => q.eq("userId", args.userId).eq("date", date))
+        .unique();
+      out.push({ date, status: entry?.status ?? "unplayed" });
+    }
+    return out;
+  },
+});
+
 export const getMyRecentDays = query({
   args: { days: v.number() },
   handler: async (ctx, args) => {
