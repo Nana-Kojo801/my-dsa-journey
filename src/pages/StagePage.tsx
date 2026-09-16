@@ -165,6 +165,7 @@ export default function StagePage({ questionId }: { questionId: string | undefin
           justSubmitted={justResult !== null}
           celebrateKey={celebrateKey}
           failReason={failReason}
+          isLocked={!isToday}
           onFile={(file) => void onFile(file)}
           onOpenHelp={() => setHelpOpen(true)}
           onOpenFeedback={() => setFbOpen(true)}

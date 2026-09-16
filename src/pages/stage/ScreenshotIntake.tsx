@@ -11,6 +11,7 @@ export function ScreenshotIntake({
   justSubmitted,
   celebrateKey,
   failReason,
+  isLocked,
   onFile,
   onOpenHelp,
   onOpenFeedback,
@@ -21,6 +22,7 @@ export function ScreenshotIntake({
   justSubmitted: boolean
   celebrateKey: number
   failReason: string
+  isLocked: boolean
   onFile: (file: File) => void
   onOpenHelp: () => void
   onOpenFeedback: () => void
@@ -31,14 +33,25 @@ export function ScreenshotIntake({
     <div className="min-w-0 flex-1 basis-[300px]">
       <div className="mb-4 flex items-center gap-2.5">
         <MonoLabel>PROOF · SCREENSHOT INTAKE</MonoLabel>
-        <button
-          onClick={onOpenHelp}
-          title="How to take the screenshot"
-          className="flex h-4 w-4 shrink-0 cursor-pointer items-center justify-center rounded-full border border-ink/30 font-mono text-[9px] font-medium text-mute hover:border-ink hover:text-ink"
-        >
-          ?
-        </button>
+        {!isLocked && (
+          <button
+            onClick={onOpenHelp}
+            title="How to take the screenshot"
+            className="flex h-4 w-4 shrink-0 cursor-pointer items-center justify-center rounded-full border border-ink/30 font-mono text-[9px] font-medium text-mute hover:border-ink hover:text-ink"
+          >
+            ?
+          </button>
+        )}
       </div>
+
+      {isLocked && current === null && (
+        <div className="border border-ink/20 bg-paper px-6 py-11 text-center">
+          <div className="mb-2.5 font-serif text-[27.6px] leading-[1.2]">Stage closed.</div>
+          <div className="mx-auto max-w-[32ch] font-sans text-[15px] leading-[1.6] text-mute">
+            Submissions are only accepted on the day a stage is live. This one has already passed.
+          </div>
+        </div>
+      )}
 
       <input
         ref={fileRef}
@@ -52,7 +65,7 @@ export function ScreenshotIntake({
         }}
       />
 
-      {phase === 'idle' && current === null && (
+      {!isLocked && phase === 'idle' && current === null && (
         <div
           onClick={() => fileRef.current?.click()}
           className="relative cursor-pointer border border-ink/20 bg-paper px-6 py-11 text-center hover:border-red"
@@ -72,7 +85,7 @@ export function ScreenshotIntake({
         </div>
       )}
 
-      {phase === 'processing' && (
+      {!isLocked && phase === 'processing' && (
         <div className="relative overflow-hidden border border-ink/20 bg-paper px-6 py-13 text-center">
           <div className="animate-pulse absolute inset-x-0 top-0 h-px bg-red" />
           <div className="mb-3 font-serif text-[27.6px] leading-[1.2]">Reading the panel…</div>
@@ -80,7 +93,7 @@ export function ScreenshotIntake({
         </div>
       )}
 
-      {phase === 'idle' && current !== null && (
+      {!isLocked && phase === 'idle' && current !== null && (
         <div className="relative">
           {justSubmitted && (
             <div key={celebrateKey} className="pointer-events-none absolute -top-3 right-0 z-10 -rotate-[9deg]">
@@ -120,7 +133,7 @@ export function ScreenshotIntake({
         </div>
       )}
 
-      {phase === 'failed' && (
+      {!isLocked && phase === 'failed' && (
         <div className="border-l-2 border-red bg-[#FFF5F4] p-5.5">
           <MonoLabel className="mb-3.5 text-red">EXTRACTION FAILED · 0 OF 4 FIELDS</MonoLabel>
           <div className="mb-3 font-serif text-[27.6px] leading-[1.2]">We couldn't find the percentiles.</div>

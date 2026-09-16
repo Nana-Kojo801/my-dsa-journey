@@ -22,6 +22,11 @@ export const recordSubmission = internalMutation({
     if (question === null) throw new Error("Question not found");
 
     const now = Date.now();
+    const today = todayStr(now);
+    if (question.date !== today) {
+      throw new Error("This stage has closed. Only today's problem can be submitted.");
+    }
+
     const score = computeScore(args.runtimePercentile, args.memoryPercentile);
 
     const existing = await ctx.db
