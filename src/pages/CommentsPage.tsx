@@ -33,7 +33,6 @@ function MentionBox({ value, onChange, placeholder, className, minRows = 3 }: Me
   const [selectedIdx, setSelectedIdx] = useState(0)
   const ref = useRef<HTMLTextAreaElement>(null)
 
-  // detect @prefix at the caret
   function detectMention(text: string, caret: number) {
     const before = text.slice(0, caret)
     const match = before.match(/@([a-zA-Z0-9_]*)$/)
@@ -75,7 +74,6 @@ function MentionBox({ value, onChange, placeholder, className, minRows = 3 }: Me
     const replaced = before.replace(/@([a-zA-Z0-9_]*)$/, `@${handle} `)
     onChange(replaced + after)
     setMentionQuery(null)
-    // restore caret after state update
     setTimeout(() => {
       ta.selectionStart = ta.selectionEnd = replaced.length
       ta.focus()
@@ -84,17 +82,8 @@ function MentionBox({ value, onChange, placeholder, className, minRows = 3 }: Me
 
   return (
     <div className="relative">
-      <textarea
-        ref={ref}
-        value={value}
-        onChange={handleChange}
-        onKeyDown={handleKeyDown}
-        placeholder={placeholder}
-        rows={minRows}
-        className={className}
-      />
       {mentionQuery !== null && suggestions.length > 0 && (
-        <ul className="absolute left-0 z-50 mt-1 w-56 border border-ink/20 bg-paper shadow-sm">
+        <ul className="absolute bottom-full left-0 z-50 mb-1 w-56 border border-ink/20 bg-paper shadow-sm">
           {suggestions.map((h, i) => (
             <li key={h}>
               <button
@@ -110,6 +99,15 @@ function MentionBox({ value, onChange, placeholder, className, minRows = 3 }: Me
           ))}
         </ul>
       )}
+      <textarea
+        ref={ref}
+        value={value}
+        onChange={handleChange}
+        onKeyDown={handleKeyDown}
+        placeholder={placeholder}
+        rows={minRows}
+        className={className}
+      />
     </div>
   )
 }
@@ -148,6 +146,8 @@ export default function CommentsPage({ questionId }: { questionId: string }) {
     await deleteComment({ commentId })
   }
 
+  const canDelete = (userId: string) => userId === profile?.userId || profile?.isAdmin
+
   return (
     <div className="animate-fade mx-auto max-w-[820px]">
       <Link to={`/question/${qid}`} className="mb-6 inline-block cursor-pointer font-mono text-[10.4px] font-medium tracking-[0.18em] text-mute no-underline">
@@ -168,6 +168,7 @@ export default function CommentsPage({ questionId }: { questionId: string }) {
       )}
       <div className="mb-6.5 border-b border-ink/14 pb-6.5" />
 
+      {/* Compose box */}
       <div className="mb-7.5 border-b border-ink/14 pb-7.5">
         <MentionBox
           value={draft}
@@ -184,85 +185,101 @@ export default function CommentsPage({ questionId }: { questionId: string }) {
         </div>
       </div>
 
+      {/* Loading skeletons */}
       {comments === undefined &&
         Array.from({ length: 3 }, (_, i) => (
-          <div key={i} className="mb-7 flex flex-wrap gap-5 border-b border-dotted border-ink/20 pb-7">
-            <div className="min-w-0 flex-0 basis-[128px]">
-              <Skel className="h-3 w-20" />
+          <div key={i} className="mb-4 border border-ink/14">
+            <div className="flex items-center border-b border-ink/10 px-4 py-2.5">
+              <Skel className="h-3 w-24" />
             </div>
-            <div className="min-w-0 flex-1 basis-[240px] border-l border-ink/14 pl-5">
+            <div className="px-4 py-3.5">
               <SkelLines count={2} lastWidth="w-1/2" />
             </div>
           </div>
         ))}
 
+      {/* Comment cards */}
       {comments?.map((c) => (
-        <div key={c._id} className="mb-7 flex flex-wrap gap-5 border-b border-dotted border-ink/20 pb-7">
-          <div className="min-w-0 flex-0 basis-[128px]">
-            <Link to={`/runner/${c.handle}`} className="mb-2 block font-mono text-[12.6px] text-ink no-underline hover:text-red">
-              {c.handle}
-            </Link>
-            <div className="font-mono text-[9.8px] font-medium leading-[1.5] tracking-[0.12em] text-faint">
-              {relativeTime(c.createdAt)} AGO
+        <div key={c._id} className="mb-4 border border-ink/14 bg-paper">
+          {/* Card header: handle + time + delete */}
+          <div className="flex items-center justify-between border-b border-ink/10 px-4 py-2.5">
+            <div className="flex items-center gap-3">
+              <Link to={`/runner/${c.handle}`} className="font-mono text-[13px] font-medium text-ink no-underline hover:text-red">
+                {c.handle}
+              </Link>
+              <span className="font-mono text-[9.5px] font-medium tracking-[0.12em] text-faint">
+                {relativeTime(c.createdAt)} AGO
+              </span>
             </div>
-          </div>
-          <div className="min-w-0 flex-1 basis-[240px] border-l border-ink/14 pl-5">
-            <CommentBody body={c.body} />
-            <div className="mt-2.5 flex items-center gap-4">
+            {canDelete(c.userId) && (
               <button
-                onClick={() => setReplyOpen(replyOpen === c._id ? null : c._id)}
-                className="cursor-pointer font-mono text-[9.8px] font-medium tracking-[0.14em] text-mute hover:text-red"
+                onClick={() => void del(c._id)}
+                className="cursor-pointer border border-red/40 px-2.5 py-1 font-mono text-[9.5px] font-medium tracking-[0.14em] text-red transition-colors hover:bg-red hover:text-paper"
               >
-                ↳ REPLY
+                DELETE
               </button>
-              {(c.userId === profile?.userId || profile?.isAdmin) && (
-                <button
-                  onClick={() => void del(c._id)}
-                  className="cursor-pointer font-mono text-[9.8px] font-medium tracking-[0.14em] text-faint hover:text-red"
-                >
-                  × DELETE
-                </button>
-              )}
-            </div>
-            {replyOpen === c._id && (
-              <div className="mt-3 border-l border-ink/18 pl-4.5">
-                <MentionBox
-                  value={replyDraft}
-                  onChange={setReplyDraft}
-                  placeholder={`Reply to ${c.handle}…`}
-                  minRows={2}
-                  className="w-full resize-y border border-ink/20 bg-paper p-3 font-sans text-[14.5px] outline-none focus:border-red"
-                />
-                <div className="mt-2.5 flex items-center gap-3.5">
-                  <PrimaryButton onClick={() => void reply(c._id)}>SEND REPLY</PrimaryButton>
-                  <button onClick={() => setReplyOpen(null)} className="cursor-pointer font-mono text-[10px] font-medium tracking-[0.14em] text-mute">
-                    CANCEL
-                  </button>
-                </div>
-              </div>
             )}
-            {c.replies.map((rp) => (
-              <div key={rp._id} className="mt-4.5 border-l border-ink/18 pl-4.5">
-                <div className="mb-1.5 flex items-baseline gap-2.5">
-                  <Link to={`/runner/${rp.handle}`} className="font-mono text-[11.5px] text-ink no-underline hover:text-red">
+          </div>
+
+          {/* Comment body */}
+          <div className="px-4 py-4">
+            <CommentBody body={c.body} />
+          </div>
+
+          {/* Reply action */}
+          <div className="px-4 pb-3.5">
+            <button
+              onClick={() => setReplyOpen(replyOpen === c._id ? null : c._id)}
+              className="cursor-pointer font-mono text-[9.8px] font-medium tracking-[0.14em] text-mute hover:text-red"
+            >
+              ↳ REPLY
+            </button>
+          </div>
+
+          {/* Reply compose */}
+          {replyOpen === c._id && (
+            <div className="border-t border-ink/10 px-4 pb-4 pt-3">
+              <MentionBox
+                value={replyDraft}
+                onChange={setReplyDraft}
+                placeholder={`Reply to ${c.handle}…`}
+                minRows={2}
+                className="w-full resize-y border border-ink/20 bg-paper p-3 font-sans text-[14.5px] outline-none focus:border-red"
+              />
+              <div className="mt-2.5 flex items-center gap-3.5">
+                <PrimaryButton onClick={() => void reply(c._id)}>SEND REPLY</PrimaryButton>
+                <button onClick={() => setReplyOpen(null)} className="cursor-pointer font-mono text-[10px] font-medium tracking-[0.14em] text-mute">
+                  CANCEL
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Replies */}
+          {c.replies.map((rp) => (
+            <div key={rp._id} className="border-t border-ink/8 bg-ink/[0.018] pl-8 pr-4 py-3.5">
+              <div className="mb-2 flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <Link to={`/runner/${rp.handle}`} className="font-mono text-[12px] font-medium text-ink no-underline hover:text-red">
                     {rp.handle}
                   </Link>
-                  <div className="font-mono text-[9.3px] font-medium tracking-[0.12em] text-faint">{relativeTime(rp.createdAt)} AGO</div>
-                  {(rp.userId === profile?.userId || profile?.isAdmin) && (
-                    <button
-                      onClick={() => void del(rp._id)}
-                      className="cursor-pointer font-mono text-[9px] font-medium tracking-[0.12em] text-faint hover:text-red"
-                    >
-                      × DELETE
-                    </button>
-                  )}
+                  <span className="font-mono text-[9.3px] font-medium tracking-[0.12em] text-faint">{relativeTime(rp.createdAt)} AGO</span>
                 </div>
-                <CommentBody body={rp.body} className="font-sans text-[15px] leading-[1.68]" />
+                {canDelete(rp.userId) && (
+                  <button
+                    onClick={() => void del(rp._id)}
+                    className="cursor-pointer border border-red/40 px-2.5 py-1 font-mono text-[9.5px] font-medium tracking-[0.14em] text-red transition-colors hover:bg-red hover:text-paper"
+                  >
+                    DELETE
+                  </button>
+                )}
               </div>
-            ))}
-          </div>
+              <CommentBody body={rp.body} className="font-sans text-[15px] leading-[1.68]" />
+            </div>
+          ))}
         </div>
       ))}
+
       {comments?.length === 0 && (
         <EmptyState
           bordered={false}
@@ -278,7 +295,6 @@ export default function CommentsPage({ questionId }: { questionId: string }) {
   )
 }
 
-// render @handles as highlighted spans
 function CommentBody({ body, className }: { body: string; className?: string }) {
   const parts = body.split(/(@[a-zA-Z0-9_]+)/g)
   return (

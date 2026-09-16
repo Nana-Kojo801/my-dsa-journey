@@ -32,6 +32,7 @@ export default function StagePage({ questionId }: { questionId: string | undefin
 
   const extract = useAction(api.vision.extractSubmission)
   const postComment = useMutation(api.comments.postComment)
+  const deleteComment = useMutation(api.comments.deleteComment)
   const submitFeedback = useMutation(api.feedback.submitFeedback)
 
   const [phase, setPhase] = useState<'idle' | 'processing' | 'failed'>('idle')
@@ -179,6 +180,8 @@ export default function StagePage({ questionId }: { questionId: string | undefin
         questionTitle={question?.title}
         comments={comments}
         posterHandle={profile?.handle}
+        profileUserId={profile?.userId}
+        profileIsAdmin={profile?.isAdmin}
         draft={draft}
         onDraftChange={setDraft}
         onPost={() => void doPostComment()}
@@ -187,6 +190,7 @@ export default function StagePage({ questionId }: { questionId: string | undefin
         replyDraft={replyDraft}
         onReplyDraftChange={setReplyDraft}
         onReply={(parentId) => void doReply(parentId)}
+        onDeleteComment={(commentId) => void deleteComment({ commentId })}
       />
 
       {fbOpen && (
